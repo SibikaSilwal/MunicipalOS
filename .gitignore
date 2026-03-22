@@ -1,0 +1,83 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+!.env*.example
+*.pem
+
+# --- Frontend (Node / Vite / React) ---
+node_modules/
+dist/
+dist-ssr/
+build/
+*.local
+.vite/
+coverage/
+*.tsbuildinfo
+.npm
+.eslintcache
+.stylelintcache
+
+# Logs (FE + general)
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Backend (.NET) ---
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Rider / ReSharper
+.idea/
+*.sln.iml
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Visual Studio
+.vs/
+*.rsuser
+*.VC.db
+*.VC.VC.opendb
+
+# Test results
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# --- VS Code (share extension recommendations only) ---
+.vscode/*
+!.vscode/extensions.json

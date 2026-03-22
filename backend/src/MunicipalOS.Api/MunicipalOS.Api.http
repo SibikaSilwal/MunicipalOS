@@ -1,0 +1,6 @@
+@MunicipalOS.Api_HostAddress = http://localhost:5132
+
+GET {{MunicipalOS.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

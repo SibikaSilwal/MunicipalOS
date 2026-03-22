@@ -1,0 +1,11 @@
+global using MunicipalOS.Domain.Aggregates.Applications;
+global using MunicipalOS.Domain.Aggregates.Applications.Entities;
+global using MunicipalOS.Domain.Aggregates.Users;
+global using MunicipalOS.Domain.Aggregates.Municipalities;
+global using MunicipalOS.Domain.Aggregates.ServiceTypes;
+global using MunicipalOS.Domain.Aggregates.ServiceTypes.Entities;
+global using MunicipalOS.Domain.Aggregates.Workflows;
+global using MunicipalOS.Domain.Aggregates.Workflows.Entities;
+global using MunicipalOS.Domain.Aggregates.Notifications;
+global using MunicipalOS.Domain.Aggregates.AuditLogs;
+global using MunicipalOS.Domain.Aggregates.Roles;

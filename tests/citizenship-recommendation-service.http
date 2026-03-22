@@ -1,0 +1,146 @@
+# =============================================================================
+# System Test: Citizenship Recommendation Letter – Service + Workflow Setup
+# =============================================================================
+# Re-playable: each run creates a fresh service type and links a new workflow
+# to it. Safe to run multiple times.
+#
+# HOW TO RUN
+#   VS Code  : Install "REST Client" extension (Huachao Mao), click "Send Request"
+#   JetBrains: Built-in HTTP Client supports this format natively
+#
+# ENVIRONMENT
+#   Select environment in http-client.env.json  →  local | staging
+# =============================================================================
+
+@baseUrl = {{$dotenv baseUrl}}
+
+# =============================================================================
+# STEP 1 – Register admin user
+#
+# Safe to run once. On subsequent runs the endpoint returns 400 "Email already
+# registered." which can be ignored — continue to Step 2.
+# =============================================================================
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin1@gmail.com",
+  "password": "admin123",
+  "fullName": "Admin1 Silwal",
+  "municipalityId": "25d2b2e1-1d58-4fe1-9492-ac7b13d79134",
+  "roleId": "a1b2c3d4-0004-0000-0000-000000000004"
+}
+
+###
+
+# =============================================================================
+# STEP 2 – Register ward officer user
+#
+# Safe to run once. On subsequent runs the endpoint returns 400 "Email already
+# registered." which can be ignored — continue to Step 3.
+# =============================================================================
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "wardofficer1@gmail.com",
+  "password": "wardofficer1123",
+  "fullName": "Ward Officer1",
+  "municipalityId": "25d2b2e1-1d58-4fe1-9492-ac7b13d79134",
+  "roleId": "a1b2c3d4-0002-0000-0000-000000000002"
+}
+
+###
+
+# =============================================================================
+# STEP 3 – Authenticate (get JWT token)
+# =============================================================================
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin1@gmail.com",
+  "password": "admin123"
+}
+
+###
+
+# =============================================================================
+# STEP 4 – Create the Service Type
+#
+# Captures the returned `id` as `serviceTypeId` for use in Step 5.
+# A new record is created on every run (no uniqueness constraint on name).
+# =============================================================================
+# @name createServiceType
+POST {{baseUrl}}/api/service-types
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.$.token}}
+
+{
+  "name": "Citizenship Recommendation Letter",
+  "description": "Ward office must recommend citizenship issuance before District Administration Office (DAO) issues citizenship.",
+  "municipalityId": "25d2b2e1-1d58-4fe1-9492-ac7b13d79134",
+  "requiredDocuments": [
+    { "name": "Citizenship Copy of Father",  "required": true  },
+    { "name": "Citizenship Copy of Mother",  "required": true  },
+    { "name": "Passport size photo",         "required": true  },
+    { "name": "Character certificate",       "required": false },
+    { "name": "Migration certificate",       "required": false }
+  ]
+}
+
+###
+
+# =============================================================================
+# STEP 5 – Create the Workflow for the service type created above
+#
+# Uses the `id` captured from Step 2.
+#
+# Workflow maps to real-world review stages after citizen submission:
+#   Step 1 – WardOfficer   : Ward secretary verifies family, birth & residence
+#   Step 2 – WardOfficer   : Field verification (residency confirmed by locals)
+#   Step 3 – WardOfficer   : Ward chair formal approval
+#   Step 4 – MunicipalOfficer : Recommendation letter issued, forwarded to DAO
+# =============================================================================
+POST {{baseUrl}}/api/workflows
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.$.token}}
+
+{
+  "serviceTypeId": "{{createServiceType.response.body.$.id}}",
+  "steps": [
+    {
+      "stepOrder": 1,
+      "roleRequired": "WardOfficer"
+    },
+    {
+      "stepOrder": 2,
+      "roleRequired": "WardOfficer"
+    },
+    {
+      "stepOrder": 3,
+      "roleRequired": "WardOfficer"
+    },
+    {
+      "stepOrder": 4,
+      "roleRequired": "MunicipalOfficer"
+    }
+  ]
+}
+
+###
+
+# =============================================================================
+# VERIFICATION – Confirm the workflow was saved correctly
+# =============================================================================
+GET {{baseUrl}}/api/workflows/{{createServiceType.response.body.$.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+
+###
+
+# =============================================================================
+# VERIFICATION – Confirm the service type appears in the municipality list
+# =============================================================================
+GET {{baseUrl}}/api/service-types?municipalityId=25d2b2e1-1d58-4fe1-9492-ac7b13d79134
+Authorization: Bearer {{login.response.body.$.token}}

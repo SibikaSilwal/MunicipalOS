@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MunicipalOS.Api/MunicipalOS.Api.csproj" />
+    <Project Path="src/MunicipalOS.Application/MunicipalOS.Application.csproj" />
+    <Project Path="src/MunicipalOS.Domain/MunicipalOS.Domain.csproj" />
+    <Project Path="src/MunicipalOS.Infrastructure/MunicipalOS.Infrastructure.csproj" />
+    <Project Path="src/MunicipalOS.Migrator/MunicipalOS.Migrator.csproj" />
+  </Folder>
+</Solution>
