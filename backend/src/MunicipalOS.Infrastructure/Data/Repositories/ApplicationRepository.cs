@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MunicipalOS.Application.Common.Interfaces;
+using MunicipalOS.Domain.Enums;
 
 namespace MunicipalOS.Infrastructure.Data.Repositories;
 
@@ -43,6 +44,32 @@ public class ApplicationRepository : IApplicationRepository
                 && a.Status != Domain.Enums.ApplicationStatus.Rejected)
             .OrderBy(a => a.SubmittedAt)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<DomainApplication>> GetActiveAssignedToOfficerAsync(
+        Guid officerId, Guid municipalityId, CancellationToken ct = default)
+    {
+        var apps = await _db.Applications
+            .AsNoTracking()
+            .Include(a => a.Citizen)
+            .Include(a => a.ServiceType)
+            .Include(a => a.WorkflowSteps)
+            .Where(a => a.ServiceType.MunicipalityId == municipalityId
+                && a.Status != Domain.Enums.ApplicationStatus.Approved
+                && a.Status != Domain.Enums.ApplicationStatus.Rejected)
+            .OrderBy(a => a.SubmittedAt)
+            .ToListAsync(ct);
+
+        return apps
+            .Where(a =>
+            {
+                var current = a.WorkflowSteps
+                    .Where(s => s.Status != ApplicationStepStatus.Completed)
+                    .OrderBy(s => s.StepOrder)
+                    .FirstOrDefault();
+                return current?.AssignedToUserId == officerId;
+            })
+            .ToList();
+    }
 
     public async Task<DomainApplication> AddAsync(DomainApplication application, CancellationToken ct = default)
     {

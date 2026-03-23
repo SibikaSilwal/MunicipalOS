@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { queryOptions } from '@tanstack/react-query'
-import { type ColumnDef } from '@tanstack/react-table'
+import { useCallback, useMemo } from 'react'
+import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { toast } from 'sonner'
 import {
   Select,
@@ -45,42 +46,54 @@ function OfficersPage() {
   const { data: users = [] } = useQuery(usersQueryOptions())
   const updateRole = useUpdateUserRole()
 
-  async function handleRoleChange(userId: string, role: RoleName) {
-    try {
-      await updateRole.mutateAsync({ userId, role })
-      toast.success('Role updated')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update role')
-    }
-  }
-
-  const columns: ColumnDef<UserRow>[] = [
-    { accessorKey: 'fullName', header: 'Name' },
-    { accessorKey: 'email', header: 'Email' },
-    {
-      accessorKey: 'role',
-      header: 'Role',
-      cell: ({ row }) => (
-        <Select
-          value={row.original.role}
-          onValueChange={(val) =>
-            val && handleRoleChange(row.original.id, val as RoleName)
-          }
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {roleOptions.map((r) => (
-              <SelectItem key={r.value} value={r.value}>
-                {r.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ),
+  const handleRoleChange = useCallback(
+    async (userId: string, role: RoleName) => {
+      try {
+        await updateRole.mutateAsync({ userId, role })
+        toast.success('Role updated')
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : 'Failed to update role',
+        )
+      }
     },
-  ]
+    [updateRole],
+  )
+
+  const columns: ColDef<UserRow>[] = useMemo(
+    () => [
+      { field: 'fullName', headerName: 'Name' },
+      { field: 'email', headerName: 'Email' },
+      {
+        field: 'role',
+        headerName: 'Role',
+        sortable: false,
+        flex: 1.5,
+        minWidth: 220,
+        cellRenderer: (p: ICellRendererParams<UserRow>) =>
+          p.data ? (
+            <Select
+              value={p.data.role}
+              onValueChange={(val) =>
+                val && handleRoleChange(p.data!.id, val as RoleName)
+              }
+            >
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {roleOptions.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null,
+      },
+    ],
+    [handleRoleChange],
+  )
 
   return (
     <div className="space-y-6">
@@ -90,10 +103,11 @@ function OfficersPage() {
       />
 
       <DataTable
-        columns={columns}
-        data={users}
+        columnDefs={columns}
+        rowData={users}
         searchColumn="fullName"
         searchPlaceholder="Search users..."
+        gridHeight={400}
       />
     </div>
   )

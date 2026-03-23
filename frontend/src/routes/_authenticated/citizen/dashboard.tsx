@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { type ColumnDef } from '@tanstack/react-table'
+import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeader } from '@/components/shared/page-header'
-import { DataTable, SortableHeader } from '@/components/shared/data-table'
+import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { myApplicationsQueryOptions } from '@/hooks/queries/use-applications'
 import type { ApplicationSummary } from '@/types/api'
@@ -21,6 +21,52 @@ function CitizenDashboard() {
   const navigate = useNavigate()
   const { data: applications = [] } = useQuery(myApplicationsQueryOptions())
 
+  const columns: ColDef<ApplicationSummary>[] = [
+    {
+      field: 'serviceTypeName',
+      headerName: 'Service Type',
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      cellRenderer: (p: ICellRendererParams<ApplicationSummary>) =>
+        p.data ? <StatusBadge status={p.data.status} /> : null,
+    },
+    {
+      colId: 'submittedAt',
+      field: 'submittedAt',
+      headerName: 'Submitted',
+      valueGetter: (p) =>
+        p.data ? new Date(p.data.submittedAt).getTime() : 0,
+      cellRenderer: (p: ICellRendererParams<ApplicationSummary>) =>
+        p.data ? formatDate(p.data.submittedAt) : null,
+    },
+    {
+      colId: 'actions',
+      headerName: '',
+      flex: 0,
+      minWidth: 100,
+      maxWidth: 120,
+      sortable: false,
+      cellRenderer: (p: ICellRendererParams<ApplicationSummary>) =>
+        p.data ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
+              navigate({
+                to: '/citizen/applications/$id',
+                params: { id: p.data!.id },
+              })
+            }}
+          >
+            View
+          </Button>
+        ) : null,
+    },
+  ]
+
   const total = applications.length
   const pending = applications.filter(
     (a) => a.status === 'Submitted' || a.status === 'UnderReview',
@@ -31,52 +77,26 @@ function CitizenDashboard() {
   const stats = [
     { label: 'Total', value: total, icon: Files, color: 'text-primary' },
     { label: 'Pending', value: pending, icon: Clock, color: 'text-warning' },
-    { label: 'Approved', value: approved, icon: FileCheck, color: 'text-success' },
-    { label: 'Rejected', value: rejected, icon: XCircle, color: 'text-destructive' },
-  ]
-
-  const columns: ColumnDef<ApplicationSummary>[] = [
     {
-      accessorKey: 'serviceTypeName',
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Service Type" />
-      ),
+      label: 'Approved',
+      value: approved,
+      icon: FileCheck,
+      color: 'text-success',
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: 'submittedAt',
-      header: ({ column }) => (
-        <SortableHeader column={column} label="Submitted" />
-      ),
-      cell: ({ row }) => formatDate(row.original.submittedAt),
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation()
-            navigate({
-              to: '/citizen/applications/$id',
-              params: { id: row.original.id },
-            })
-          }}
-        >
-          View
-        </Button>
-      ),
+      label: 'Rejected',
+      value: rejected,
+      icon: XCircle,
+      color: 'text-destructive',
     },
   ]
 
   return (
     <div className="space-y-6">
-      <PageHeader title="My Dashboard" description="View and manage your service applications">
+      <PageHeader
+        title="My Dashboard"
+        description="View and manage your service applications"
+      >
         <Button onClick={() => navigate({ to: '/citizen/apply' })}>
           <FilePlus className="mr-2 h-4 w-4" />
           Apply for Service
@@ -100,8 +120,8 @@ function CitizenDashboard() {
       </div>
 
       <DataTable
-        columns={columns}
-        data={applications}
+        columnDefs={columns}
+        rowData={applications}
         searchColumn="serviceTypeName"
         searchPlaceholder="Search by service type..."
         onRowClick={(row) =>

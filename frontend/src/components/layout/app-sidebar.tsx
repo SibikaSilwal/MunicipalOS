@@ -95,8 +95,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
         className,
       )}
     >
-      <div className="flex h-14 items-center gap-2 border-b px-4">
-        <FileText className="h-6 w-6 text-primary" />
+      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4 text-sidebar-foreground">
+        <FileText className="h-6 w-6 shrink-0 text-sidebar-primary" />
         <span className="text-lg font-bold">Municipal OS</span>
       </div>
 
@@ -121,19 +121,21 @@ export function AppSidebar({ className }: AppSidebarProps) {
         })}
       </nav>
 
-      <Separator />
+      <Separator className="bg-sidebar-border" />
 
-      <div className="p-3">
+      <div className="p-3 text-sidebar-foreground">
         <div className="mb-2 px-3">
           <p className="text-sm font-medium truncate">{user?.fullName}</p>
-          <p className="text-xs text-muted-foreground truncate">
+          <p className="text-xs text-sidebar-foreground/70 truncate">
             {user?.email}
           </p>
-          <p className="text-xs text-muted-foreground capitalize">{role}</p>
+          <p className="text-xs text-sidebar-foreground/70 capitalize">
+            {role}
+          </p>
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           onClick={logout}
         >
           <LogOut className="h-4 w-4" />

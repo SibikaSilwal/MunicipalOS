@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { toast } from 'sonner'
-import { type ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,6 +32,26 @@ interface DocRow {
   name: string
   required: boolean
 }
+
+const columns: ColDef<ServiceType>[] = [
+  { field: 'name', headerName: 'Name' },
+  {
+    field: 'description',
+    headerName: 'Description',
+    cellRenderer: (p: ICellRendererParams<ServiceType>) =>
+      p.data ? (
+        <span className="text-muted-foreground">
+          {p.data.description || '—'}
+        </span>
+      ) : null,
+  },
+  {
+    colId: 'documents',
+    headerName: 'Required Docs',
+    maxWidth: 140,
+    valueGetter: (p) => p.data?.requiredDocuments.length ?? 0,
+  },
+]
 
 function ServiceTypesPage() {
   const { user } = useAuth()
@@ -82,27 +102,11 @@ function ServiceTypesPage() {
       setDialogOpen(false)
       resetForm()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create service type')
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to create service type',
+      )
     }
   }
-
-  const columns: ColumnDef<ServiceType>[] = [
-    { accessorKey: 'name', header: 'Name' },
-    {
-      accessorKey: 'description',
-      header: 'Description',
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.description || '—'}
-        </span>
-      ),
-    },
-    {
-      id: 'documents',
-      header: 'Required Docs',
-      cell: ({ row }) => row.original.requiredDocuments.length,
-    },
-  ]
 
   return (
     <div className="space-y-6">
@@ -117,8 +121,8 @@ function ServiceTypesPage() {
       </PageHeader>
 
       <DataTable
-        columns={columns}
-        data={serviceTypes}
+        columnDefs={columns}
+        rowData={serviceTypes}
         searchColumn="name"
         searchPlaceholder="Search service types..."
       />

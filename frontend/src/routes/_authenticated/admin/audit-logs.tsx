@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { type ColumnDef } from '@tanstack/react-table'
+import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -33,6 +33,55 @@ const eventTypes = [
   'WorkflowCreated',
 ]
 
+const columns: ColDef<AuditLogEntry>[] = [
+  {
+    field: 'timestamp',
+    headerName: 'Timestamp',
+    flex: 0,
+    minWidth: 160,
+    valueGetter: (p) => (p.data ? new Date(p.data.timestamp).getTime() : 0),
+    cellRenderer: (p: ICellRendererParams<AuditLogEntry>) =>
+      p.data ? (
+        <span className="whitespace-nowrap text-xs">
+          {formatDateTime(p.data.timestamp)}
+        </span>
+      ) : null,
+  },
+  { field: 'eventType', headerName: 'Event' },
+  {
+    field: 'userId',
+    headerName: 'User ID',
+    cellClass: 'font-mono text-xs',
+    valueFormatter: (p) =>
+      p.value ? `${String(p.value).slice(0, 8)}…` : '',
+  },
+  {
+    field: 'applicationId',
+    headerName: 'Application',
+    cellRenderer: (p: ICellRendererParams<AuditLogEntry>) =>
+      p.data?.applicationId ? (
+        <span className="font-mono text-xs">
+          {p.data.applicationId.slice(0, 8)}…
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
+    colId: 'metadata',
+    headerName: 'Metadata',
+    sortable: false,
+    cellRenderer: (p: ICellRendererParams<AuditLogEntry>) =>
+      p.data?.metadata ? (
+        <pre className="max-w-xs truncate text-xs text-muted-foreground">
+          {JSON.stringify(p.data.metadata)}
+        </pre>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+]
+
 function AuditLogsPage() {
   const [filters, setFilters] = useState({
     userId: '',
@@ -50,55 +99,12 @@ function AuditLogsPage() {
 
   const { data: logs = [] } = useQuery(auditLogsQueryOptions(activeFilters))
 
-  const columns: ColumnDef<AuditLogEntry>[] = [
-    {
-      accessorKey: 'timestamp',
-      header: 'Timestamp',
-      cell: ({ row }) => (
-        <span className="text-xs whitespace-nowrap">
-          {formatDateTime(row.original.timestamp)}
-        </span>
-      ),
-    },
-    { accessorKey: 'eventType', header: 'Event' },
-    {
-      accessorKey: 'userId',
-      header: 'User ID',
-      cell: ({ row }) => (
-        <span className="font-mono text-xs">
-          {row.original.userId.slice(0, 8)}...
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'applicationId',
-      header: 'Application',
-      cell: ({ row }) =>
-        row.original.applicationId ? (
-          <span className="font-mono text-xs">
-            {row.original.applicationId.slice(0, 8)}...
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
-    {
-      id: 'metadata',
-      header: 'Metadata',
-      cell: ({ row }) =>
-        row.original.metadata ? (
-          <pre className="max-w-xs truncate text-xs text-muted-foreground">
-            {JSON.stringify(row.original.metadata)}
-          </pre>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
-  ]
-
   return (
     <div className="space-y-6">
-      <PageHeader title="Audit Logs" description="Search and review system activity" />
+      <PageHeader
+        title="Audit Logs"
+        description="Search and review system activity"
+      />
 
       <Card>
         <CardContent className="pt-6">
@@ -174,7 +180,7 @@ function AuditLogsPage() {
         </CardContent>
       </Card>
 
-      <DataTable columns={columns} data={logs} />
+      <DataTable columnDefs={columns} rowData={logs} gridHeight={480} />
     </div>
   )
 }

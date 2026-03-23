@@ -19,6 +19,17 @@ export const pendingApplicationsQueryOptions = () =>
     refetchInterval: 15_000,
   })
 
+/** Active applications whose current workflow step is assigned to the signed-in officer */
+export const myAssignedApplicationsQueryOptions = () =>
+  queryOptions({
+    queryKey: ['applications', 'my-assigned'],
+    queryFn: () =>
+      api
+        .get<ApplicationSummary[]>('/officers/my-applications')
+        .then((r) => r.data),
+    staleTime: 15_000,
+  })
+
 export const applicationDetailQueryOptions = (id: string) =>
   queryOptions({
     queryKey: ['applications', id],
@@ -45,6 +56,7 @@ export function useApproveApplication() {
       api.post(`/applications/${id}/approve`, { comment }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -59,6 +71,7 @@ export function useRejectApplication() {
       api.post(`/applications/${id}/reject`, { comment }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -73,6 +86,7 @@ export function useRequestDocuments() {
       api.post(`/applications/${id}/request-documents`, { comment }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -87,6 +101,7 @@ export function usePickUpStep() {
       api.post(`/applications/${id}/pick-up`),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -101,6 +116,7 @@ export function useAssignStep() {
       api.post(`/applications/${id}/assign-step`, { officerId }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -115,6 +131,7 @@ export function useCompleteStep() {
       api.post(`/applications/${id}/complete-step`, { comment }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
