@@ -6,6 +6,7 @@ public record GetApplicationByIdQuery(Guid Id) : IQuery<Result<ApplicationDetail
 
 public record ApplicationDetailDto(
     Guid Id,
+    string FriendlyApplicationId,
     Guid CitizenId,
     string CitizenName,
     Guid ServiceTypeId,
@@ -13,6 +14,7 @@ public record ApplicationDetailDto(
     string Status,
     int CurrentStep,
     DateTime SubmittedAt,
+    DateTime? DueAt,
     List<ApplicationDocumentDto> Documents,
     List<ApplicationStatusHistoryDto> StatusHistory,
     List<ApplicationWorkflowStepDto> WorkflowSteps);
@@ -33,6 +35,8 @@ public record ApplicationWorkflowStepDto(
     string? StepDescription,
     string RoleRequired,
     string Status,
+    int? ExpectedCompletionMinutes,
+    DateTime? DueAt,
     Guid? AssignedToUserId,
     string? AssignedToUserName,
     DateTime? AssignedOn,

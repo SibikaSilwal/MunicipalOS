@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { FileText } from 'lucide-react'
+import appLogo from '@/assets/nagarsanchalanapplogo.svg'
 import { loginUser, getRoleDashboard } from '@/lib/auth'
 
 export const Route = createFileRoute('/login')({
@@ -46,10 +46,16 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileText className="h-6 w-6" />
+          <div className="mx-auto mb-3 flex justify-center">
+            <img
+              src={appLogo}
+              alt=""
+              className="h-16 w-auto max-w-full object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl">Sign in to Municipal OS</CardTitle>
+          <CardTitle className="text-2xl">
+            Sign in to Nagar Digital Sewa Pranali
+          </CardTitle>
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>

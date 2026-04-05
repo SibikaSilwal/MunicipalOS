@@ -19,8 +19,7 @@ import { Route as AuthenticatedCitizenDashboardRouteImport } from './routes/_aut
 import { Route as AuthenticatedCitizenApplyRouteImport } from './routes/_authenticated/citizen/apply'
 import { Route as AuthenticatedAdminWorkflowsRouteImport } from './routes/_authenticated/admin/workflows'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin/services'
-import { Route as AuthenticatedAdminOfficersRouteImport } from './routes/_authenticated/admin/officers'
-import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin/audit-logs'
+import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
 import { Route as AuthenticatedOfficerReviewIdRouteImport } from './routes/_authenticated/officer/review.$id'
 import { Route as AuthenticatedCitizenApplicationsIdRouteImport } from './routes/_authenticated/citizen/applications.$id'
 
@@ -79,16 +78,10 @@ const AuthenticatedAdminServicesRoute =
     path: '/admin/services',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdminOfficersRoute =
-  AuthenticatedAdminOfficersRouteImport.update({
-    id: '/admin/officers',
-    path: '/admin/officers',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedAdminAuditLogsRoute =
-  AuthenticatedAdminAuditLogsRouteImport.update({
-    id: '/admin/audit-logs',
-    path: '/admin/audit-logs',
+const AuthenticatedAdminMetricsRoute =
+  AuthenticatedAdminMetricsRouteImport.update({
+    id: '/admin/metrics',
+    path: '/admin/metrics',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedOfficerReviewIdRoute =
@@ -108,8 +101,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
-  '/admin/officers': typeof AuthenticatedAdminOfficersRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/workflows': typeof AuthenticatedAdminWorkflowsRoute
   '/citizen/apply': typeof AuthenticatedCitizenApplyRoute
@@ -123,8 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
-  '/admin/officers': typeof AuthenticatedAdminOfficersRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/workflows': typeof AuthenticatedAdminWorkflowsRoute
   '/citizen/apply': typeof AuthenticatedCitizenApplyRoute
@@ -140,8 +131,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
-  '/_authenticated/admin/officers': typeof AuthenticatedAdminOfficersRoute
+  '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/workflows': typeof AuthenticatedAdminWorkflowsRoute
   '/_authenticated/citizen/apply': typeof AuthenticatedCitizenApplyRoute
@@ -157,8 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
-    | '/admin/audit-logs'
-    | '/admin/officers'
+    | '/admin/metrics'
     | '/admin/services'
     | '/admin/workflows'
     | '/citizen/apply'
@@ -172,8 +161,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
-    | '/admin/audit-logs'
-    | '/admin/officers'
+    | '/admin/metrics'
     | '/admin/services'
     | '/admin/workflows'
     | '/citizen/apply'
@@ -188,8 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/register'
-    | '/_authenticated/admin/audit-logs'
-    | '/_authenticated/admin/officers'
+    | '/_authenticated/admin/metrics'
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/workflows'
     | '/_authenticated/citizen/apply'
@@ -279,18 +266,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminServicesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin/officers': {
-      id: '/_authenticated/admin/officers'
-      path: '/admin/officers'
-      fullPath: '/admin/officers'
-      preLoaderRoute: typeof AuthenticatedAdminOfficersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/admin/audit-logs': {
-      id: '/_authenticated/admin/audit-logs'
-      path: '/admin/audit-logs'
-      fullPath: '/admin/audit-logs'
-      preLoaderRoute: typeof AuthenticatedAdminAuditLogsRouteImport
+    '/_authenticated/admin/metrics': {
+      id: '/_authenticated/admin/metrics'
+      path: '/admin/metrics'
+      fullPath: '/admin/metrics'
+      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/officer/review/$id': {
@@ -311,8 +291,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminAuditLogsRoute: typeof AuthenticatedAdminAuditLogsRoute
-  AuthenticatedAdminOfficersRoute: typeof AuthenticatedAdminOfficersRoute
+  AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminWorkflowsRoute: typeof AuthenticatedAdminWorkflowsRoute
   AuthenticatedCitizenApplyRoute: typeof AuthenticatedCitizenApplyRoute
@@ -324,8 +303,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminAuditLogsRoute: AuthenticatedAdminAuditLogsRoute,
-  AuthenticatedAdminOfficersRoute: AuthenticatedAdminOfficersRoute,
+  AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminWorkflowsRoute: AuthenticatedAdminWorkflowsRoute,
   AuthenticatedCitizenApplyRoute: AuthenticatedCitizenApplyRoute,

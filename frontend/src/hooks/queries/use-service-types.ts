@@ -1,7 +1,14 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import type { ServiceType } from '@/types/api'
-import type { CreateServiceTypeValues } from '@/lib/validators/service-type'
+
+interface CreateServiceTypePayload {
+  name: string
+  description?: string
+  municipalityId: string
+  expectedCompletionMinutes?: number
+  requiredDocuments: { name: string; required: boolean }[]
+}
 
 export const serviceTypesQueryOptions = (municipalityId?: string) =>
   queryOptions({
@@ -18,7 +25,7 @@ export const serviceTypesQueryOptions = (municipalityId?: string) =>
 export function useCreateServiceType() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateServiceTypeValues) =>
+    mutationFn: (data: CreateServiceTypePayload) =>
       api.post<{ id: string; name: string }>('/service-types', data).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-types'] })

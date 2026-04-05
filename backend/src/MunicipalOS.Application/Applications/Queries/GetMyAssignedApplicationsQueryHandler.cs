@@ -19,6 +19,7 @@ public class GetMyAssignedApplicationsQueryHandler
         return apps
             .Select(a => new ApplicationSummaryDto(
                 a.Id,
+                a.FriendlyApplicationId,
                 a.ServiceTypeId,
                 a.ServiceType.Name,
                 a.Status.ToString(),

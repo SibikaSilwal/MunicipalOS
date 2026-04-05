@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline } from '@/components/shared/status-timeline'
 import { WorkflowProgress } from '@/components/shared/workflow-progress'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { TooltipForDisabledControl } from '@/components/ui/tooltip'
 import {
   applicationDetailQueryOptions,
   useApproveApplication,
@@ -31,6 +32,10 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { municipalityOfficersQueryOptions } from '@/hooks/queries/use-municipalities'
 import { formatDate } from '@/lib/utils'
+import {
+  roleRequiredTooltip,
+  userMatchesWorkflowRole,
+} from '@/lib/workflow-role'
 import {
   CheckCircle,
   XCircle,
@@ -99,12 +104,24 @@ function ReviewPage() {
     (currentWfStep?.status === 'Pending' ||
       currentWfStep?.status === 'WaitingToBePicked')
   const isAdmin = user?.role === 'Admin'
-  const canAct =
-    isAssignedToMe &&
-    (currentWfStep?.status === 'InProgress' ||
-      currentWfStep?.status === 'DocumentsRequested')
+  const roleMatchesStep = currentWfStep
+    ? userMatchesWorkflowRole(user?.role, currentWfStep.roleRequired)
+    : false
+  const stepAllowsOfficerActions =
+    currentWfStep?.status === 'InProgress' ||
+    currentWfStep?.status === 'DocumentsRequested'
+  const canAct = isAssignedToMe && roleMatchesStep && stepAllowsOfficerActions
+  const actionsBlockedByRole =
+    isAssignedToMe && stepAllowsOfficerActions && !roleMatchesStep
+
+  const eligibleOfficers = currentWfStep
+    ? officers.filter((o) => o.roleName === currentWfStep.roleRequired)
+    : officers
   const isTerminal =
     application.status === 'Approved' || application.status === 'Rejected'
+  const roleRequiredHint = currentWfStep
+    ? roleRequiredTooltip(currentWfStep.roleRequired)
+    : ''
 
   async function handlePickUp() {
     try {
@@ -173,7 +190,10 @@ function ReviewPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Review Application">
+      <PageHeader
+        title="Review Application"
+        description={application.friendlyApplicationId}
+      >
         <StatusBadge status={application.status} />
       </PageHeader>
 
@@ -185,6 +205,12 @@ function ReviewPage() {
               <CardTitle>Application Info</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-sm text-muted-foreground">Application</p>
+                <p className="font-medium font-mono text-sm">
+                  {application.friendlyApplicationId}
+                </p>
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Citizen</p>
                 <p className="font-medium">{application.citizenName}</p>
@@ -290,14 +316,20 @@ function ReviewPage() {
                 {/* Unassigned: show pick-up + assign */}
                 {isUnassigned && (
                   <>
-                    <Button
-                      className="w-full"
-                      onClick={handlePickUp}
-                      disabled={isProcessing}
+                    <TooltipForDisabledControl
+                      active={!roleMatchesStep}
+                      label={roleRequiredHint}
+                      wrapperClassName="block w-full"
                     >
-                      <Hand className="mr-2 h-4 w-4" />
-                      {pickUp.isPending ? 'Picking up...' : 'Pick Up This Step'}
-                    </Button>
+                      <Button
+                        className="w-full"
+                        onClick={handlePickUp}
+                        disabled={isProcessing || !roleMatchesStep}
+                      >
+                        <Hand className="mr-2 h-4 w-4" />
+                        {pickUp.isPending ? 'Picking up...' : 'Pick Up This Step'}
+                      </Button>
+                    </TooltipForDisabledControl>
                     {isAdmin && (
                       <Button
                         variant="outline"
@@ -327,45 +359,63 @@ function ReviewPage() {
                     </Button>
                   )}
 
-                {/* Can act: complete / reject / request docs */}
-                {canAct && (
-                  <>
-                    <Button
-                      className="w-full"
-                      onClick={() => setDialog('complete-step')}
-                      disabled={isProcessing}
+                {/* Can act: complete / reject / request docs (or wrong role: disabled + tooltip) */}
+                {(canAct || actionsBlockedByRole) && (
+                  <div className="space-y-3">
+                    <TooltipForDisabledControl
+                      active={actionsBlockedByRole}
+                      label={roleRequiredHint}
+                      wrapperClassName="block w-full"
                     >
-                      {isLastStep ? (
-                        <>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Approve Application
-                        </>
-                      ) : (
-                        <>
-                          <ArrowRight className="mr-2 h-4 w-4" />
-                          Complete Step & Advance
-                        </>
-                      )}
-                    </Button>
+                      <Button
+                        className="w-full"
+                        onClick={() => setDialog('complete-step')}
+                        disabled={isProcessing || actionsBlockedByRole}
+                      >
+                        {isLastStep ? (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Approve Application
+                          </>
+                        ) : (
+                          <>
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            Complete Step & Advance
+                          </>
+                        )}
+                      </Button>
+                    </TooltipForDisabledControl>
                     <div className="flex gap-2">
-                      <Button
-                        variant="destructive"
-                        className="flex-1"
-                        onClick={() => setDialog('reject')}
-                        disabled={isProcessing}
+                      <TooltipForDisabledControl
+                        active={actionsBlockedByRole}
+                        label={roleRequiredHint}
+                        wrapperClassName="min-w-0 flex-1"
                       >
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Reject
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setDialog('request-docs')}
-                        disabled={isProcessing}
+                        <Button
+                          variant="destructive"
+                          className="w-full min-w-0 flex-1"
+                          onClick={() => setDialog('reject')}
+                          disabled={isProcessing || actionsBlockedByRole}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Reject
+                        </Button>
+                      </TooltipForDisabledControl>
+                      <TooltipForDisabledControl
+                        active={actionsBlockedByRole}
+                        label={roleRequiredHint}
+                        wrapperClassName="min-w-0 flex-1"
                       >
-                        <FileQuestion className="mr-2 h-4 w-4" />
-                        Request Docs
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full min-w-0 flex-1"
+                          onClick={() => setDialog('request-docs')}
+                          disabled={isProcessing || actionsBlockedByRole}
+                        >
+                          <FileQuestion className="mr-2 h-4 w-4" />
+                          Request Docs
+                        </Button>
+                      </TooltipForDisabledControl>
                     </div>
                     {isAdmin && (
                       <Button
@@ -378,7 +428,7 @@ function ReviewPage() {
                         Reassign Step
                       </Button>
                     )}
-                  </>
+                  </div>
                 )}
 
                 {/* Assigned to me but waiting (shouldn't usually happen, but safe) */}
@@ -505,16 +555,25 @@ function ReviewPage() {
               No officers found for this municipality.
             </p>
           )}
+          {municipalityId &&
+            officers.length > 0 &&
+            eligibleOfficers.length === 0 &&
+            currentWfStep && (
+              <p className="text-sm text-muted-foreground">
+                No officers with the required role (
+                {currentWfStep.roleRequired}) for this step.
+              </p>
+            )}
           <Select
             value={selectedOfficerId}
             onValueChange={(val) => setSelectedOfficerId(val ?? '')}
-            disabled={!municipalityId || officers.length === 0}
+            disabled={!municipalityId || eligibleOfficers.length === 0}
           >
             <SelectTrigger>
               <SelectValue placeholder="Choose an officer..." />
             </SelectTrigger>
             <SelectContent>
-              {officers.map((o) => (
+              {eligibleOfficers.map((o) => (
                 <SelectItem key={o.id} value={o.id}>
                   {o.fullName} ({o.roleName})
                 </SelectItem>

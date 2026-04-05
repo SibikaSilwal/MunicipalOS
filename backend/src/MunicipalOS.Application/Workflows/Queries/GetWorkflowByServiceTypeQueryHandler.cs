@@ -21,7 +21,13 @@ public class GetWorkflowByServiceTypeQueryHandler
             definition.Id,
             definition.ServiceTypeId,
             definition.Steps
-                .Select(s => new WorkflowStepDto(s.Id, s.StepOrder, s.RoleRequired, s.StepName, s.StepDescription))
+                .Select(s => new WorkflowStepDto(
+                    s.Id,
+                    s.StepOrder,
+                    s.RoleRequired,
+                    s.StepName,
+                    s.StepDescription,
+                    s.ExpectedCompletionMinutes))
                 .ToList());
 
         return Result<WorkflowDefinitionDto>.Success(dto);

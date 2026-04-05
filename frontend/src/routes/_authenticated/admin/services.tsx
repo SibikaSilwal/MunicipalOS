@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { ColDef, ICellRendererParams } from 'ag-grid-community'
@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -21,6 +28,12 @@ import {
   serviceTypesQueryOptions,
   useCreateServiceType,
 } from '@/hooks/queries/use-service-types'
+import {
+  formatSlaDays,
+  formatSlaMinutes,
+  parseSlaDaysToMinutes,
+  SLA_DAY_OPTIONS,
+} from '@/lib/sla'
 import type { ServiceType } from '@/types/api'
 import { Plus, Trash2 } from 'lucide-react'
 
@@ -51,9 +64,16 @@ const columns: ColDef<ServiceType>[] = [
     maxWidth: 140,
     valueGetter: (p) => p.data?.requiredDocuments.length ?? 0,
   },
+  {
+    colId: 'expectedSla',
+    headerName: 'Expected SLA',
+    valueGetter: (p) =>
+      formatSlaMinutes(p.data?.expectedCompletionMinutes),
+  },
 ]
 
 function ServiceTypesPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { data: serviceTypes = [] } = useQuery(
     serviceTypesQueryOptions(user?.municipalityId),
@@ -63,6 +83,7 @@ function ServiceTypesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [expectedCompletionDays, setExpectedCompletionDays] = useState('')
   const [docs, setDocs] = useState<DocRow[]>([{ name: '', required: true }])
 
   function addDocRow() {
@@ -82,6 +103,7 @@ function ServiceTypesPage() {
   function resetForm() {
     setName('')
     setDescription('')
+    setExpectedCompletionDays('')
     setDocs([{ name: '', required: true }])
   }
 
@@ -91,11 +113,18 @@ function ServiceTypesPage() {
       return
     }
 
+    const parsedSla = parseSlaDaysToMinutes(expectedCompletionDays)
+    if (parsedSla.error) {
+      toast.error(parsedSla.error)
+      return
+    }
+
     try {
       await createServiceType.mutateAsync({
         name,
         description: description || undefined,
         municipalityId: user?.municipalityId ?? '',
+        expectedCompletionMinutes: parsedSla.value,
         requiredDocuments: docs.filter((d) => d.name.trim()),
       })
       toast.success('Service type created')
@@ -125,6 +154,12 @@ function ServiceTypesPage() {
         rowData={serviceTypes}
         searchColumn="name"
         searchPlaceholder="Search service types..."
+        onRowClick={(row) =>
+          navigate({
+            to: '/admin/workflows',
+            search: { serviceTypeId: row.id },
+          })
+        }
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -149,6 +184,32 @@ function ServiceTypesPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the service..."
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Expected Completion (days)</Label>
+              <Select
+                value={expectedCompletionDays}
+                onValueChange={(value) => setExpectedCompletionDays(value ?? '')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select expected completion days" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SLA_DAY_OPTIONS.map((days) => {
+                    const value = days.toString()
+                    return (
+                      <SelectItem key={value} value={value}>
+                        {formatSlaDays(days)}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {expectedCompletionDays.trim()
+                  ? `Preview: ${formatSlaDays(Number(expectedCompletionDays))}`
+                  : 'Leave blank if no service-level SLA is configured.'}
+              </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">

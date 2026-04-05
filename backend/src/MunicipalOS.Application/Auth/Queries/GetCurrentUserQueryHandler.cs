@@ -22,6 +22,7 @@ public class GetCurrentUserQueryHandler
             user.Email,
             user.FullName,
             user.Role?.Name,
-            user.Municipality?.Name));
+            user.Municipality?.Name,
+            user.Municipality?.ShortName));
     }
 }

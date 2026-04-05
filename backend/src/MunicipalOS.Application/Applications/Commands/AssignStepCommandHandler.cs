@@ -1,3 +1,4 @@
+using MunicipalOS.Application.Applications;
 using MunicipalOS.Application.Common;
 using MunicipalOS.Application.Common.Interfaces;
 
@@ -29,6 +30,10 @@ public class AssignStepCommandHandler
         var currentStep = application.GetCurrentStep();
         if (currentStep is null)
             return Result<string>.Failure("No active step to assign.");
+
+        var roleError = WorkflowStepRoleGuard.GetRoleMismatchMessage(officer, currentStep);
+        if (roleError is not null)
+            return Result<string>.Failure(roleError);
 
         try
         {

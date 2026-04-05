@@ -20,7 +20,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootComponent() {
   return (
     <>
-      <Outlet />
+      <div className="flex h-full min-h-0 flex-col">
+        <Outlet />
+      </div>
       <Toaster richColors position="top-right" />
       {import.meta.env.DEV && (
         <>

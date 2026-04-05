@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { FileText } from 'lucide-react'
+import appLogo from '@/assets/nagarsanchalanapplogo.svg'
 import { registerUser } from '@/lib/auth'
 import { municipalitiesQueryOptions } from '@/hooks/queries/use-municipalities'
 
@@ -79,8 +79,12 @@ function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileText className="h-6 w-6" />
+          <div className="mx-auto mb-3 flex justify-center">
+            <img
+              src={appLogo}
+              alt=""
+              className="h-16 w-auto max-w-full object-contain"
+            />
           </div>
           <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>
@@ -139,8 +143,14 @@ function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="municipality">Municipality</Label>
-              <Select value={municipalityId} onValueChange={(val) => setMunicipalityId(val ?? '')}>
-                <SelectTrigger>
+              <Select
+                value={municipalityId || undefined}
+                onValueChange={(val) => setMunicipalityId(val ?? '')}
+                itemToStringLabel={(id) =>
+                  municipalities.find((m) => m.id === id)?.name ?? String(id)
+                }
+              >
+                <SelectTrigger id="municipality">
                   <SelectValue placeholder="Select a municipality" />
                 </SelectTrigger>
                 <SelectContent>

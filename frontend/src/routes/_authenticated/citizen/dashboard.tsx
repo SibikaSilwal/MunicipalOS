@@ -23,6 +23,14 @@ function CitizenDashboard() {
 
   const columns: ColDef<ApplicationSummary>[] = [
     {
+      field: 'friendlyApplicationId',
+      headerName: 'Application',
+      flex: 0,
+      minWidth: 140,
+      maxWidth: 200,
+      cellClass: 'font-mono text-xs',
+    },
+    {
       field: 'serviceTypeName',
       headerName: 'Service Type',
     },

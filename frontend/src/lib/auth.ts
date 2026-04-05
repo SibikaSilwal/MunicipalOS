@@ -19,6 +19,7 @@ export async function loginUser(credentials: LoginRequest) {
     fullName: '',
     role: 'Citizen',
     municipalityId: '',
+    municipalityShortName: null,
   })
 
   const user = await fetchCurrentUser()
@@ -36,6 +37,7 @@ export async function registerUser(req: RegisterRequest) {
     fullName: req.fullName,
     role: 'Citizen',
     municipalityId: req.municipalityId,
+    municipalityShortName: null,
   })
 
   const user = await fetchCurrentUser()
@@ -61,6 +63,7 @@ export async function fetchCurrentUser() {
     fullName: data.fullName,
     role: (data.role ?? 'Citizen') as RoleName,
     municipalityId: token ? parseMunicipalityIdFromToken(token) : '',
+    municipalityShortName: data.municipalityShortName ?? null,
   }
 }
 

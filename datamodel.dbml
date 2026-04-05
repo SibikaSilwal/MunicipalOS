@@ -1,0 +1,136 @@
+// MunicipalOS — database schema (derived from EF Core AppDbContext + domain model)
+// Target: PostgreSQL (Npgsql), snake_case columns via EFCore.NamingConventions
+
+Project municipal_os {
+  database_type: "PostgreSQL"
+  Note: '''
+    Enum-like columns stored as varchar/text:
+    - applications.status: Submitted | UnderReview | Approved | Rejected | DocumentsRequested
+    - application_workflow_steps.status: Pending | WaitingToBePicked | InProgress | DocumentsRequested | Completed | Rejected
+    Seed data: roles table has fixed GUIDs for Citizen, WardOfficer, MunicipalOfficer, Admin.
+  '''
+}
+
+// --- Identity & org ---
+
+Table roles {
+  id uuid [pk, note: 'GUID; seeded']
+  name varchar [not null, unique, note: 'RoleName enum as string']
+}
+
+Table municipalities {
+  id uuid [pk]
+  name varchar [not null]
+  shortname varchar(5) [null, unique, note: 'partial unique WHERE shortname IS NOT NULL in DB']
+}
+
+Table users {
+  id uuid [pk]
+  email varchar [not null, unique]
+  password_hash varchar [not null]
+  full_name varchar [not null]
+  role_id uuid [not null, ref: > roles.id]
+  municipality_id uuid [not null, ref: > municipalities.id]
+  created_at timestamptz [not null, default: `NOW()`]
+}
+
+// --- Services & workflow templates ---
+
+Table service_types {
+  id uuid [pk]
+  name varchar [not null]
+  description varchar [null]
+  municipality_id uuid [not null, ref: > municipalities.id]
+  expected_completion_minutes int [null]
+}
+
+Table required_documents {
+  id uuid [pk]
+  service_type_id uuid [not null, ref: > service_types.id]
+  name varchar [not null]
+  required boolean [not null, default: true]
+}
+
+Table workflow_definitions {
+  id uuid [pk]
+  service_type_id uuid [not null, unique, ref: > service_types.id, note: '1:1 enforced by unique FK']
+}
+
+Table workflow_steps {
+  id uuid [pk]
+  workflow_definition_id uuid [not null, ref: > workflow_definitions.id]
+  step_order int [not null]
+  role_required varchar [not null]
+  step_name varchar [not null, default: '']
+  step_description varchar [null]
+  expected_completion_minutes int [null]
+}
+
+// --- Applications (runtime) ---
+
+Table applications {
+  id uuid [pk]
+  friendly_application_id varchar(255) [not null, unique]
+  citizen_id uuid [not null, ref: > users.id]
+  service_type_id uuid [not null, ref: > service_types.id]
+  status varchar [not null, note: 'ApplicationStatus as string']
+  current_step int [not null, default: 1]
+  submitted_at timestamptz [not null, default: `NOW()`]
+  due_at timestamptz [null]
+}
+
+Table application_documents {
+  id uuid [pk]
+  application_id uuid [not null, ref: > applications.id]
+  document_name varchar [not null]
+  file_path varchar [not null]
+  uploaded_at timestamptz [not null, default: `NOW()`]
+}
+
+Table application_status_history {
+  id uuid [pk]
+  application_id uuid [not null, ref: > applications.id]
+  status varchar [not null]
+  changed_by uuid [not null, ref: > users.id]
+  changed_at timestamptz [not null, default: `NOW()`]
+  comment varchar [null]
+}
+
+Table application_workflow_steps {
+  id uuid [pk]
+  application_id uuid [not null, ref: > applications.id]
+  workflow_step_id uuid [not null, ref: > workflow_steps.id]
+  step_order int [not null]
+  expected_completion_minutes int [null]
+  due_at timestamptz [null]
+  status varchar [not null, note: 'ApplicationStepStatus as string']
+  assigned_to_user_id uuid [null, ref: > users.id]
+  assigned_on timestamptz [null]
+  completed_by_user_id uuid [null, ref: > users.id]
+  completed_on timestamptz [null]
+  comment varchar [null]
+
+  Indexes {
+    (application_id, step_order) [unique]
+    (due_at)
+  }
+}
+
+// --- Cross-cutting ---
+
+Table audit_logs {
+  id uuid [pk]
+  event_type varchar [not null]
+  user_id uuid [not null, ref: > users.id]
+  application_id uuid [null, ref: > applications.id]
+  timestamp timestamptz [not null, default: `NOW()`]
+  metadata jsonb [null]
+}
+
+Table notifications {
+  id uuid [pk]
+  user_id uuid [not null, ref: > users.id]
+  message varchar [not null]
+  is_read boolean [not null, default: false]
+  sent_at timestamptz [not null, default: `NOW()`]
+}

@@ -18,6 +18,7 @@ export interface User {
 
 export interface Application {
   id: string
+  friendlyApplicationId: string
   citizenId: string
   serviceTypeId: string
   status: ApplicationStatus
@@ -27,6 +28,7 @@ export interface Application {
 
 export interface ApplicationSummary {
   id: string
+  friendlyApplicationId: string
   serviceTypeId: string
   serviceTypeName: string
   status: ApplicationStatus
@@ -60,6 +62,7 @@ export interface ApplicationWorkflowStepDto {
 
 export interface ApplicationDetail {
   id: string
+  friendlyApplicationId: string
   citizenId: string
   citizenName: string
   serviceTypeId: string
@@ -67,6 +70,7 @@ export interface ApplicationDetail {
   status: ApplicationStatus
   currentStep: number
   submittedAt: string
+  dueAt: string | null
   documents: ApplicationDocument[]
   statusHistory: StatusHistoryEntry[]
   workflowSteps: ApplicationWorkflowStepDto[]
@@ -77,6 +81,7 @@ export interface ServiceType {
   name: string
   description: string | null
   municipalityId: string
+  expectedCompletionMinutes?: number | null
   requiredDocuments: RequiredDocument[]
 }
 
@@ -98,6 +103,7 @@ export interface WorkflowStep {
   roleRequired: RoleName
   stepName: string
   stepDescription: string | null
+  expectedCompletionMinutes?: number | null
 }
 
 export interface ApplicationDocument {
@@ -116,15 +122,6 @@ export interface StatusHistoryEntry {
   comment: string | null
 }
 
-export interface AuditLogEntry {
-  id: string
-  eventType: string
-  userId: string
-  applicationId: string | null
-  timestamp: string
-  metadata: Record<string, unknown> | null
-}
-
 export interface Notification {
   id: string
   message: string
@@ -135,6 +132,7 @@ export interface Notification {
 export interface Municipality {
   id: string
   name: string
+  shortName: string | null
 }
 
 /** GET /api/municipalities/{municipalityId}/officers */
@@ -172,10 +170,62 @@ export interface CurrentUserDto {
   fullName: string
   role: string | null
   municipality: string | null
+  municipalityShortName: string | null
 }
 
 export interface PaginatedResult<T> {
   items: T[]
+  totalCount: number
+  page: number
+  pageSize: number
+}
+
+/** GET /api/applications/metrics/sla/dashboard */
+export interface SlaDashboardDto {
+  fromUtc: string
+  toUtc: string
+  totalCompleted: number
+  completedWithinSla: number
+  breached: number
+  percentCompletedWithinSla: number
+  byService: SlaServiceBreakdownRow[]
+  byTerminalOfficer: SlaOfficerBreakdownRow[]
+}
+
+export interface SlaServiceBreakdownRow {
+  serviceTypeId: string
+  serviceTypeName: string
+  totalCompleted: number
+  completedWithinSla: number
+  breached: number
+  percentCompletedWithinSla: number
+}
+
+export interface SlaOfficerBreakdownRow {
+  terminalOfficerId: string | null
+  terminalOfficerName: string
+  totalCompleted: number
+  completedWithinSla: number
+  breached: number
+  percentCompletedWithinSla: number
+}
+
+/** GET /api/applications/metrics/sla/applications */
+export interface SlaApplicationReportRow {
+  applicationId: string
+  friendlyApplicationId: string
+  serviceTypeName: string
+  status: string
+  completedAt: string
+  dueAt: string
+  withinSla: boolean
+  terminalOfficerId: string | null
+  terminalOfficerName: string | null
+  minutesLate: number | null
+}
+
+export interface PagedSlaApplicationsDto {
+  items: SlaApplicationReportRow[]
   totalCount: number
   page: number
   pageSize: number

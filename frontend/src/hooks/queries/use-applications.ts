@@ -19,6 +19,24 @@ export const pendingApplicationsQueryOptions = () =>
     refetchInterval: 15_000,
   })
 
+/** Officers and admins: every application in the municipality (all statuses). */
+export const municipalityApplicationsQueryOptions = () =>
+  queryOptions({
+    queryKey: ['applications', 'municipality-all'],
+    queryFn: () =>
+      api.get<ApplicationSummary[]>('/applications/all').then((r) => r.data),
+    staleTime: 15_000,
+  })
+
+/** Admin-only: approved and rejected applications for the municipality. */
+export const completedApplicationsQueryOptions = () =>
+  queryOptions({
+    queryKey: ['applications', 'completed'],
+    queryFn: () =>
+      api.get<ApplicationSummary[]>('/applications/completed').then((r) => r.data),
+    staleTime: 30_000,
+  })
+
 /** Active applications whose current workflow step is assigned to the signed-in officer */
 export const myAssignedApplicationsQueryOptions = () =>
   queryOptions({
@@ -42,9 +60,12 @@ export function useSubmitApplication() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: { serviceTypeId: string }) =>
-      api.post<{ id: string }>('/applications', data).then((r) => r.data),
+      api
+        .post<{ id: string; friendlyApplicationId: string }>('/applications', data)
+        .then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'my'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
     },
   })
 }
@@ -57,6 +78,8 @@ export function useApproveApplication() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
       queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'completed'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -72,6 +95,8 @@ export function useRejectApplication() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
       queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'completed'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -87,6 +112,8 @@ export function useRequestDocuments() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
       queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'completed'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -102,6 +129,7 @@ export function usePickUpStep() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
       queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -117,6 +145,7 @@ export function useAssignStep() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
       queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })
@@ -132,6 +161,8 @@ export function useCompleteStep() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['applications', 'pending'] })
       queryClient.invalidateQueries({ queryKey: ['applications', 'my-assigned'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'completed'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', 'municipality-all'] })
       queryClient.invalidateQueries({
         queryKey: ['applications', variables.id],
       })

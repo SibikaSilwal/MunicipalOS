@@ -1,8 +1,10 @@
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { TopNav } from '@/components/layout/top-nav'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { fetchCurrentUser } from '@/lib/auth'
+import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ context, location }) => {
@@ -19,9 +21,23 @@ export const Route = createFileRoute('/_authenticated')({
 function AuthenticatedLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  useEffect(() => {
+    let cancelled = false
+    const token = useAuthStore.getState().token
+    if (!token) return
+    fetchCurrentUser()
+      .then((user) => {
+        if (!cancelled) useAuthStore.getState().login(token, user)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <AppSidebar className="hidden lg:flex" />
+    <div className="flex h-full min-h-0 flex-1 overflow-hidden">
+      <AppSidebar className="hidden min-h-0 lg:flex" />
 
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-64 p-0">
@@ -29,9 +45,9 @@ function AuthenticatedLayout() {
         </SheetContent>
       </Sheet>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <TopNav onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain p-4 lg:p-6">
           <Outlet />
         </main>
       </div>

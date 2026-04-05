@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import type {
   ColDef,
+  DomLayoutType,
   DoesExternalFilterPass,
   GridApi,
   GridReadyEvent,
@@ -22,8 +23,10 @@ export interface DataTableProps<TData> {
   searchColumn?: Extract<keyof TData, string>
   onRowClick?: (row: TData) => void
   className?: string
-  /** Pixel height or CSS length for the grid body (AG Grid needs a defined height) */
+  /** Pixel height or CSS length for the grid body (ignored when autoHeight is true) */
   gridHeight?: number | string
+  /** Grow with row count instead of a tall empty viewport (good with pagination). */
+  autoHeight?: boolean
 }
 
 export function DataTable<TData>({
@@ -34,6 +37,7 @@ export function DataTable<TData>({
   onRowClick,
   className,
   gridHeight = 440,
+  autoHeight = false,
 }: DataTableProps<TData>) {
   const gridApiRef = useRef<GridApi<TData> | null>(null)
   const [search, setSearch] = useState('')
@@ -83,6 +87,8 @@ export function DataTable<TData>({
   const heightStyle =
     typeof gridHeight === 'number' ? `${gridHeight}px` : gridHeight
 
+  const domLayout: DomLayoutType = autoHeight ? 'autoHeight' : 'normal'
+
   return (
     <div className={cn('space-y-4', className)}>
       {searchColumn ? (
@@ -95,11 +101,15 @@ export function DataTable<TData>({
       ) : null}
 
       <div
-        className="w-full overflow-hidden rounded-md border border-border"
-        style={{ height: heightStyle }}
+        className={cn(
+          'w-full overflow-hidden rounded-md border border-border',
+          autoHeight && 'min-h-[120px]',
+        )}
+        style={autoHeight ? undefined : { height: heightStyle }}
       >
         <AgGridReact<TData>
           theme={gridTheme}
+          domLayout={domLayout}
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}

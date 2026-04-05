@@ -21,9 +21,26 @@ public class GetServiceTypesByMunicipalityQueryHandler
                 s.Name,
                 s.Description,
                 s.MunicipalityId,
+                ResolveExpectedCompletionMinutes(s),
                 s.RequiredDocuments
                     .Select(d => new RequiredDocumentDto(d.Id, d.Name, d.Required))
                     .ToList()))
             .ToList();
+    }
+
+    private static int? ResolveExpectedCompletionMinutes(ServiceType serviceType)
+    {
+        if (serviceType.ExpectedCompletionMinutes.HasValue)
+            return serviceType.ExpectedCompletionMinutes.Value;
+
+        var stepMinutes = serviceType.WorkflowDefinition?.Steps
+            .Where(step => step.ExpectedCompletionMinutes.HasValue)
+            .Select(step => step.ExpectedCompletionMinutes!.Value)
+            .ToList();
+
+        if (stepMinutes is null || stepMinutes.Count == 0)
+            return null;
+
+        return stepMinutes.Sum();
     }
 }

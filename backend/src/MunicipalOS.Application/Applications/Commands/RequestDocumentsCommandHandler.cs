@@ -1,3 +1,4 @@
+using MunicipalOS.Application.Applications;
 using MunicipalOS.Application.Common;
 using MunicipalOS.Application.Common.Interfaces;
 
@@ -7,8 +8,13 @@ public class RequestDocumentsCommandHandler
     : ICommandHandler<RequestDocumentsCommand, Result<string>>
 {
     private readonly IApplicationRepository _repo;
+    private readonly IUserRepository _userRepo;
 
-    public RequestDocumentsCommandHandler(IApplicationRepository repo) => _repo = repo;
+    public RequestDocumentsCommandHandler(IApplicationRepository repo, IUserRepository userRepo)
+    {
+        _repo = repo;
+        _userRepo = userRepo;
+    }
 
     public async Task<Result<string>> HandleAsync(
         RequestDocumentsCommand command, CancellationToken ct = default)
@@ -20,6 +26,11 @@ public class RequestDocumentsCommandHandler
         var currentStep = application.GetCurrentStep();
         if (currentStep is null)
             return Result<string>.Failure("No active step to request documents for.");
+
+        var actor = await _userRepo.GetByIdAsync(command.ChangedBy, ct);
+        var roleError = WorkflowStepRoleGuard.GetRoleMismatchMessage(actor, currentStep);
+        if (roleError is not null)
+            return Result<string>.Failure(roleError);
 
         application.RequestDocumentsForCurrentStep(command.ChangedBy, command.Comment);
         await _repo.UpdateAsync(application, ct);

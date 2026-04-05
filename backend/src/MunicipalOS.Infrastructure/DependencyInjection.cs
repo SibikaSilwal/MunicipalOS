@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Minio;
+using MunicipalOS.Application.Common;
 using MunicipalOS.Application.Common.Interfaces;
 using MunicipalOS.Infrastructure.Data;
 using MunicipalOS.Infrastructure.Data.Repositories;
@@ -26,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IFileStorageService, MinioFileStorageService>();
+        services.AddSingleton<ISlaBusinessTimeCalculator, NepalBusinessTimeCalculator>();
+        services.AddSingleton<IFriendlyApplicationIdGenerator, FriendlyApplicationIdGenerator>();
 
         services.AddMinio(configureClient =>
         {

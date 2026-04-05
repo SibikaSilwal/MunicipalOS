@@ -13,6 +13,8 @@ public class ServiceTypeRepository : IServiceTypeRepository
         => await _db.ServiceTypes
             .AsNoTracking()
             .Include(s => s.RequiredDocuments)
+            .Include(s => s.WorkflowDefinition)
+                .ThenInclude(w => w!.Steps)
             .Where(s => s.MunicipalityId == municipalityId)
             .OrderBy(s => s.Name)
             .ToListAsync(ct);
@@ -21,6 +23,8 @@ public class ServiceTypeRepository : IServiceTypeRepository
         => await _db.ServiceTypes
             .AsNoTracking()
             .Include(s => s.RequiredDocuments)
+            .Include(s => s.WorkflowDefinition)
+                .ThenInclude(w => w!.Steps)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
     public async Task<ServiceType> AddAsync(ServiceType serviceType, CancellationToken ct = default)

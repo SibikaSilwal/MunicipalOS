@@ -18,6 +18,10 @@ public class MunicipalityRepository : IMunicipalityRepository
     public async Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default)
         => await _db.Municipalities.AsNoTracking().AnyAsync(m => m.Name.ToLower() == name.ToLower(), ct);
 
+    public Task<bool> ExistsByShortNameAsync(string shortName, CancellationToken ct = default)
+        => _db.Municipalities.AsNoTracking()
+            .AnyAsync(m => m.ShortName == shortName, ct);
+
     public async Task<Municipality> AddAsync(Municipality municipality, CancellationToken ct = default)
     {
         _db.Municipalities.Add(municipality);

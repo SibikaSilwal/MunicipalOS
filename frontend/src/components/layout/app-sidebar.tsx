@@ -1,16 +1,15 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import {
   LayoutDashboard,
-  FileText,
   FilePlus,
   ClipboardList,
   FileStack,
   Settings,
   GitBranch,
-  Users,
-  ScrollText,
   LogOut,
+  BarChart3,
 } from 'lucide-react'
+import appLogo from '@/assets/nagarsanchalanapplogo.svg'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -62,21 +61,21 @@ const navItems: NavItem[] = [
     roles: ['Admin'],
   },
   {
-    label: 'Officers',
-    to: '/admin/officers',
-    icon: Users,
-    roles: ['Admin'],
-  },
-  {
-    label: 'Audit Logs',
-    to: '/admin/audit-logs',
-    icon: ScrollText,
+    label: 'Performance',
+    to: '/admin/metrics',
+    icon: BarChart3,
     roles: ['Admin'],
   },
 ]
 
 interface AppSidebarProps {
   className?: string
+}
+
+function sidebarBrandTitle(municipalityShortName?: string | null) {
+  const short = municipalityShortName?.trim()
+  const suffix = 'Nagar Digital Sewa Pranali'
+  return short ? `${short} ${suffix}` : suffix
 }
 
 export function AppSidebar({ className }: AppSidebarProps) {
@@ -95,9 +94,15 @@ export function AppSidebar({ className }: AppSidebarProps) {
         className,
       )}
     >
-      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4 text-sidebar-foreground">
-        <FileText className="h-6 w-6 shrink-0 text-sidebar-primary" />
-        <span className="text-lg font-bold">Municipal OS</span>
+      <div className="flex min-h-14 items-center gap-2 border-b border-sidebar-border px-3 py-2 text-sidebar-foreground">
+        <img
+          src={appLogo}
+          alt=""
+          className="h-9 w-9 shrink-0 object-contain"
+        />
+        <span className="text-sm font-bold leading-tight">
+          {sidebarBrandTitle(user?.municipalityShortName)}
+        </span>
       </div>
 
       <nav className="flex-1 space-y-1 p-3">

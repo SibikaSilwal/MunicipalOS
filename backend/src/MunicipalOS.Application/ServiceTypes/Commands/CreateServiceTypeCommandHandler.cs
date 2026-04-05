@@ -17,7 +17,8 @@ public class CreateServiceTypeCommandHandler
             command.Name,
             command.Description,
             command.MunicipalityId,
-            command.RequiredDocuments.Select(d => (d.Name, d.Required)));
+            command.RequiredDocuments.Select(d => (d.Name, d.Required)),
+            command.ExpectedCompletionMinutes);
 
         await _repo.AddAsync(serviceType, ct);
 

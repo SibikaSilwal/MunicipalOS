@@ -10,6 +10,7 @@ public record ServiceTypeDto(
     string Name,
     string? Description,
     Guid MunicipalityId,
+    int? ExpectedCompletionMinutes,
     List<RequiredDocumentDto> RequiredDocuments);
 
 public record RequiredDocumentDto(Guid Id, string Name, bool Required);

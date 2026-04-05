@@ -10,7 +10,7 @@ public class WorkflowDefinition
 
     public static WorkflowDefinition Create(
         Guid serviceTypeId,
-        IEnumerable<(int StepOrder, string RoleRequired, string StepName, string? StepDescription)> steps) => new()
+        IEnumerable<(int StepOrder, string RoleRequired, string StepName, string? StepDescription, int? ExpectedCompletionMinutes)> steps) => new()
     {
         Id = Guid.NewGuid(),
         ServiceTypeId = serviceTypeId,
@@ -20,7 +20,8 @@ public class WorkflowDefinition
             StepOrder = s.StepOrder,
             RoleRequired = s.RoleRequired,
             StepName = s.StepName,
-            StepDescription = s.StepDescription
+            StepDescription = s.StepDescription,
+            ExpectedCompletionMinutes = s.ExpectedCompletionMinutes
         }).ToList()
     };
 }

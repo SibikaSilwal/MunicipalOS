@@ -6,6 +6,7 @@ public record GetMyApplicationsQuery(Guid CitizenId) : IQuery<IReadOnlyList<Appl
 
 public record ApplicationSummaryDto(
     Guid Id,
+    string FriendlyApplicationId,
     Guid ServiceTypeId,
     string ServiceTypeName,
     string Status,

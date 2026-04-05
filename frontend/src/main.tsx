@@ -5,9 +5,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
 import { routeTree } from './routeTree.gen'
 import { useAuthStore } from './stores/auth-store'
+import { TooltipProvider } from './components/ui/tooltip'
 import './index.css'
+import appFavicon from './assets/nagarsanchalanapplogo.svg'
 
 ModuleRegistry.registerModules([AllCommunityModule])
+
+{
+  const link = document.createElement('link')
+  link.rel = 'icon'
+  link.type = 'image/svg+xml'
+  link.href = appFavicon
+  document.head.appendChild(link)
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,12 +50,16 @@ function App() {
   const { isAuthenticated, user } = useAuthStore()
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider
-        router={router}
-        context={{ queryClient, auth: { isAuthenticated, user } }}
-      />
-    </QueryClientProvider>
+    <div className="h-full min-h-0">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider delay={250}>
+          <RouterProvider
+            router={router}
+            context={{ queryClient, auth: { isAuthenticated, user } }}
+          />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </div>
   )
 }
 

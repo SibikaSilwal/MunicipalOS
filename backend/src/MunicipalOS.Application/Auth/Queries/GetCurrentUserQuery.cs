@@ -9,4 +9,5 @@ public record CurrentUserDto(
     string Email,
     string FullName,
     string? Role,
-    string? Municipality);
+    string? Municipality,
+    string? MunicipalityShortName);

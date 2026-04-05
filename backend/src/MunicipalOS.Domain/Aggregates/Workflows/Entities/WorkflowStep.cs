@@ -8,6 +8,7 @@ public class WorkflowStep
     public string RoleRequired { get; set; } = string.Empty;
     public string StepName { get; set; } = string.Empty;
     public string? StepDescription { get; set; }
+    public int? ExpectedCompletionMinutes { get; set; }
 
     public WorkflowDefinition WorkflowDefinition { get; set; } = null!;
 }

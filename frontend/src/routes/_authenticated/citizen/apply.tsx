@@ -70,7 +70,7 @@ function ApplyPage() {
         })
       }
 
-      toast.success('Application submitted successfully!')
+      toast.success(`Application ${result.friendlyApplicationId} submitted`)
       navigate({
         to: '/citizen/applications/$id',
         params: { id: result.id },

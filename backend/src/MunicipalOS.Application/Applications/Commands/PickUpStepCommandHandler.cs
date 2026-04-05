@@ -1,3 +1,4 @@
+using MunicipalOS.Application.Applications;
 using MunicipalOS.Application.Common;
 using MunicipalOS.Application.Common.Interfaces;
 
@@ -7,8 +8,13 @@ public class PickUpStepCommandHandler
     : ICommandHandler<PickUpStepCommand, Result<string>>
 {
     private readonly IApplicationRepository _repo;
+    private readonly IUserRepository _userRepo;
 
-    public PickUpStepCommandHandler(IApplicationRepository repo) => _repo = repo;
+    public PickUpStepCommandHandler(IApplicationRepository repo, IUserRepository userRepo)
+    {
+        _repo = repo;
+        _userRepo = userRepo;
+    }
 
     public async Task<Result<string>> HandleAsync(
         PickUpStepCommand command, CancellationToken ct = default)
@@ -20,6 +26,11 @@ public class PickUpStepCommandHandler
         var currentStep = application.GetCurrentStep();
         if (currentStep is null)
             return Result<string>.Failure("No active step to pick up.");
+
+        var officer = await _userRepo.GetByIdAsync(command.OfficerId, ct);
+        var roleError = WorkflowStepRoleGuard.GetRoleMismatchMessage(officer, currentStep);
+        if (roleError is not null)
+            return Result<string>.Failure(roleError);
 
         try
         {

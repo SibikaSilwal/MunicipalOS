@@ -8,6 +8,8 @@ public class ApplicationWorkflowStep
     public Guid ApplicationId { get; set; }
     public Guid WorkflowStepId { get; set; }
     public int StepOrder { get; set; }
+    public int? ExpectedCompletionMinutes { get; set; }
+    public DateTime? DueAt { get; set; }
     public ApplicationStepStatus Status { get; set; } = ApplicationStepStatus.Pending;
     public Guid? AssignedToUserId { get; set; }
     public DateTime? AssignedOn { get; set; }

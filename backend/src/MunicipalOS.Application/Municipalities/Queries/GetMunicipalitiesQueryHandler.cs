@@ -16,7 +16,7 @@ public class GetMunicipalitiesQueryHandler
         var municipalities = await _repo.GetAllAsync(ct);
 
         return municipalities
-            .Select(m => new MunicipalityDto(m.Id, m.Name))
+            .Select(m => new MunicipalityDto(m.Id, m.Name, m.ShortName))
             .ToList();
     }
 }

@@ -6,7 +6,8 @@ public record CreateServiceTypeCommand(
     string Name,
     string? Description,
     Guid MunicipalityId,
-    List<RequiredDocumentInput> RequiredDocuments) : ICommand<Result<ServiceTypeCreatedResult>>;
+    List<RequiredDocumentInput> RequiredDocuments,
+    int? ExpectedCompletionMinutes = null) : ICommand<Result<ServiceTypeCreatedResult>>;
 
 public record RequiredDocumentInput(string Name, bool Required);
 

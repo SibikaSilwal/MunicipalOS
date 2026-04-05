@@ -42,6 +42,7 @@ function ApplicationDetailPage() {
   const currentWfStep = application.workflowSteps.find(
     (s) => s.stepOrder === application.currentStep,
   )
+  const friendlyApplicationId = application.friendlyApplicationId
 
   async function handleDownloadCertificate() {
     const response = await api.get(`/applications/${id}/certificate`, {
@@ -50,7 +51,10 @@ function ApplicationDetailPage() {
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `certificate-${id}.pdf`)
+    link.setAttribute(
+      'download',
+      `certificate-${friendlyApplicationId}.pdf`,
+    )
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -59,7 +63,7 @@ function ApplicationDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Application ${application.id.slice(0, 8)}...`}>
+      <PageHeader title={application.friendlyApplicationId}>
         <StatusBadge status={application.status} />
       </PageHeader>
 
@@ -70,6 +74,12 @@ function ApplicationDetailPage() {
               <CardTitle>Application Details</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-sm text-muted-foreground">Reference</p>
+                <p className="font-medium font-mono text-sm">
+                  {application.friendlyApplicationId}
+                </p>
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">Service Type</p>
                 <p className="font-medium">{application.serviceTypeName}</p>

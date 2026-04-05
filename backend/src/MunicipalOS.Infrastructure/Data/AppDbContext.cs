@@ -49,6 +49,12 @@ public class AppDbContext : DbContext
             e.HasKey(m => m.Id);
             e.Property(m => m.Id).ValueGeneratedOnAdd();
             e.Property(m => m.Name).IsRequired();
+            e.Property(m => m.ShortName)
+                .HasMaxLength(5)
+                .HasColumnName("shortname");
+            e.HasIndex(m => m.ShortName)
+                .IsUnique()
+                .HasFilter("shortname IS NOT NULL");
         });
 
         // --- users ---
@@ -79,6 +85,7 @@ public class AppDbContext : DbContext
             e.HasKey(s => s.Id);
             e.Property(s => s.Id).ValueGeneratedOnAdd();
             e.Property(s => s.Name).IsRequired();
+            e.Property(s => s.ExpectedCompletionMinutes);
 
             e.HasOne(s => s.Municipality)
                 .WithMany(m => m.ServiceTypes)
@@ -123,6 +130,7 @@ public class AppDbContext : DbContext
             e.Property(s => s.RoleRequired).IsRequired();
             e.Property(s => s.StepName).IsRequired().HasDefaultValue("");
             e.Property(s => s.StepDescription);
+            e.Property(s => s.ExpectedCompletionMinutes);
 
             e.HasOne(s => s.WorkflowDefinition)
                 .WithMany(w => w.Steps)
@@ -135,11 +143,17 @@ public class AppDbContext : DbContext
             e.ToTable("applications");
             e.HasKey(a => a.Id);
             e.Property(a => a.Id).ValueGeneratedOnAdd();
+            e.Property(a => a.FriendlyApplicationId)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("friendly_application_id");
+            e.HasIndex(a => a.FriendlyApplicationId).IsUnique();
             e.Property(a => a.Status)
                 .IsRequired()
                 .HasConversion<string>();
             e.Property(a => a.CurrentStep).IsRequired().HasDefaultValue(1);
             e.Property(a => a.SubmittedAt).IsRequired().HasDefaultValueSql("NOW()");
+            e.Property(a => a.DueAt);
 
             e.HasOne(a => a.Citizen)
                 .WithMany(u => u.Applications)
@@ -193,6 +207,8 @@ public class AppDbContext : DbContext
             e.Property(s => s.Status)
                 .IsRequired()
                 .HasConversion<string>();
+            e.Property(s => s.ExpectedCompletionMinutes);
+            e.Property(s => s.DueAt);
             e.Property(s => s.AssignedOn);
             e.Property(s => s.CompletedOn);
 
@@ -213,6 +229,7 @@ public class AppDbContext : DbContext
                 .HasForeignKey(s => s.CompletedByUserId);
 
             e.HasIndex(s => new { s.ApplicationId, s.StepOrder }).IsUnique();
+            e.HasIndex(s => s.DueAt);
         });
 
         // --- audit_logs ---

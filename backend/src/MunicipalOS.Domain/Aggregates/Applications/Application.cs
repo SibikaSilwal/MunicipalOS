@@ -5,11 +5,13 @@ namespace MunicipalOS.Domain.Aggregates.Applications;
 public class Application
 {
     public Guid Id { get; set; }
+    public string FriendlyApplicationId { get; set; } = string.Empty;
     public Guid CitizenId { get; set; }
     public Guid ServiceTypeId { get; set; }
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Submitted;
     public int CurrentStep { get; set; } = 1;
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? DueAt { get; set; }
 
     public User Citizen { get; set; } = null!;
     public ServiceType ServiceType { get; set; } = null!;
@@ -18,9 +20,10 @@ public class Application
     public ICollection<ApplicationWorkflowStep> WorkflowSteps { get; set; } = new List<ApplicationWorkflowStep>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
-    public static Application Create(Guid citizenId, Guid serviceTypeId) => new()
+    public static Application Create(Guid citizenId, Guid serviceTypeId, string friendlyApplicationId) => new()
     {
         Id = Guid.NewGuid(),
+        FriendlyApplicationId = friendlyApplicationId,
         CitizenId = citizenId,
         ServiceTypeId = serviceTypeId,
         Status = ApplicationStatus.Submitted,
@@ -41,6 +44,11 @@ public class Application
             .ToList();
 
     public void InitializeWorkflowSteps(IEnumerable<WorkflowStep> templateSteps)
+        => InitializeWorkflowSteps(templateSteps, _ => null);
+
+    public void InitializeWorkflowSteps(
+        IEnumerable<WorkflowStep> templateSteps,
+        Func<int?, DateTime?> dueAtResolver)
     {
         foreach (var step in templateSteps.OrderBy(s => s.StepOrder))
         {
@@ -50,6 +58,8 @@ public class Application
                 ApplicationId = Id,
                 WorkflowStepId = step.Id,
                 StepOrder = step.StepOrder,
+                ExpectedCompletionMinutes = step.ExpectedCompletionMinutes,
+                DueAt = dueAtResolver(step.ExpectedCompletionMinutes),
                 Status = step.StepOrder == 1
                     ? ApplicationStepStatus.WaitingToBePicked
                     : ApplicationStepStatus.Pending

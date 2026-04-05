@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  municipalityApplicationsQueryOptions,
   myAssignedApplicationsQueryOptions,
   pendingApplicationsQueryOptions,
 } from '@/hooks/queries/use-applications'
@@ -17,14 +18,12 @@ import { Badge } from '@/components/ui/badge'
 
 const dashboardColumnDefs: ColDef<ApplicationSummary>[] = [
   {
-    field: 'id',
-    headerName: 'Application ID',
+    field: 'friendlyApplicationId',
+    headerName: 'Application',
     flex: 0,
-    minWidth: 120,
-    maxWidth: 140,
+    minWidth: 140,
+    maxWidth: 200,
     cellClass: 'font-mono text-xs',
-    valueFormatter: (p) =>
-      p.value ? `${String(p.value).slice(0, 8)}…` : '',
   },
   { field: 'serviceTypeName', headerName: 'Service Type' },
   {
@@ -58,14 +57,12 @@ const dashboardColumnDefs: ColDef<ApplicationSummary>[] = [
 
 const catalogColumnDefs: ColDef<ApplicationSummary>[] = [
   {
-    field: 'id',
-    headerName: 'Application ID',
+    field: 'friendlyApplicationId',
+    headerName: 'Application',
     flex: 0,
-    minWidth: 120,
-    maxWidth: 140,
+    minWidth: 140,
+    maxWidth: 200,
     cellClass: 'font-mono text-xs',
-    valueFormatter: (p) =>
-      p.value ? `${String(p.value).slice(0, 8)}…` : '',
   },
   { field: 'serviceTypeName', headerName: 'Service Type' },
   {
@@ -106,10 +103,10 @@ const catalogColumnDefs: ColDef<ApplicationSummary>[] = [
   },
 ]
 
-type TabValue = 'all' | 'mine'
+type TabValue = 'active' | 'all' | 'mine'
 
 export interface OfficerPendingApplicationsTabsProps {
-  /** Queue view (officer dashboard) vs full catalog (all applications page) */
+  /** Queue (pending only) vs municipality-wide list (every status). */
   variant: 'dashboard' | 'catalog'
   title: string
 }
@@ -119,27 +116,41 @@ export function OfficerPendingApplicationsTabs({
   title,
 }: OfficerPendingApplicationsTabsProps) {
   const navigate = useNavigate()
-  const [tab, setTab] = useState<TabValue>('all')
+  const [tab, setTab] = useState<TabValue>('active')
   const columnDefs =
     variant === 'dashboard' ? dashboardColumnDefs : catalogColumnDefs
 
-  const pendingQuery = useQuery(pendingApplicationsQueryOptions())
+  const pendingQuery = useQuery({
+    ...pendingApplicationsQueryOptions(),
+    enabled: tab === 'active',
+  })
+  const municipalityAllQuery = useQuery({
+    ...municipalityApplicationsQueryOptions(),
+    enabled: variant === 'catalog' && tab === 'all',
+  })
   const assignedQuery = useQuery({
     ...myAssignedApplicationsQueryOptions(),
     enabled: tab === 'mine',
   })
 
   const pending = pendingQuery.data ?? []
+  const municipalityAll = municipalityAllQuery.data ?? []
   const assigned = assignedQuery.data ?? []
 
   const description =
-    tab === 'all'
-      ? variant === 'dashboard'
-        ? `${pending.length} application(s) awaiting review`
-        : `${pending.length} active application(s) across the municipality`
-      : assignedQuery.isLoading
-        ? 'Loading assignments…'
-        : `${assigned.length} application(s) assigned to you`
+    tab === 'active'
+      ? pendingQuery.isLoading
+        ? 'Loading applications…'
+        : variant === 'dashboard'
+          ? `${pending.length} application(s) awaiting review`
+          : `${pending.length} active application(s) across the municipality`
+      : tab === 'all'
+        ? municipalityAllQuery.isLoading
+          ? 'Loading applications…'
+          : `${municipalityAll.length} application(s) in your municipality (all statuses)`
+        : assignedQuery.isLoading
+          ? 'Loading assignments…'
+          : `${assigned.length} application(s) assigned to you`
 
   return (
     <div className="space-y-6">
@@ -151,25 +162,65 @@ export function OfficerPendingApplicationsTabs({
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger value="all">All pending applications</TabsTrigger>
+          <TabsTrigger value="active">
+            {variant === 'dashboard'
+              ? 'All pending applications'
+              : 'Active applications'}
+          </TabsTrigger>
+          {variant === 'catalog' ? (
+            <TabsTrigger value="all">All applications</TabsTrigger>
+          ) : null}
           <TabsTrigger value="mine">Assigned to me</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <div className="mt-4">
-        {tab === 'all' ? (
-          <DataTable
-            columnDefs={columnDefs}
-            rowData={pending}
-            searchColumn="serviceTypeName"
-            searchPlaceholder="Filter by service type..."
-            onRowClick={(row) =>
-              navigate({
-                to: '/officer/review/$id',
-                params: { id: row.id },
-              })
-            }
-          />
+        {tab === 'active' ? (
+          pendingQuery.isLoading ? (
+            <Skeleton className="h-[440px] w-full rounded-md" />
+          ) : pendingQuery.isError ? (
+            <p className="text-sm text-destructive">
+              {pendingQuery.error instanceof Error
+                ? pendingQuery.error.message
+                : 'Could not load applications.'}
+            </p>
+          ) : (
+            <DataTable
+              columnDefs={columnDefs}
+              rowData={pending}
+              searchColumn="serviceTypeName"
+              searchPlaceholder="Filter by service type..."
+              onRowClick={(row) =>
+                navigate({
+                  to: '/officer/review/$id',
+                  params: { id: row.id },
+                })
+              }
+            />
+          )
+        ) : tab === 'all' ? (
+          municipalityAllQuery.isLoading ? (
+            <Skeleton className="h-[440px] w-full rounded-md" />
+          ) : municipalityAllQuery.isError ? (
+            <p className="text-sm text-destructive">
+              {municipalityAllQuery.error instanceof Error
+                ? municipalityAllQuery.error.message
+                : 'Could not load applications.'}
+            </p>
+          ) : (
+            <DataTable
+              columnDefs={columnDefs}
+              rowData={municipalityAll}
+              searchColumn="serviceTypeName"
+              searchPlaceholder="Filter by service type..."
+              onRowClick={(row) =>
+                navigate({
+                  to: '/officer/review/$id',
+                  params: { id: row.id },
+                })
+              }
+            />
+          )
         ) : assignedQuery.isLoading ? (
           <Skeleton className="h-[440px] w-full rounded-md" />
         ) : assignedQuery.isError ? (

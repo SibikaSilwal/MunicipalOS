@@ -7,4 +7,10 @@ public record GetWorkflowByServiceTypeQuery(Guid ServiceTypeId)
 
 public record WorkflowDefinitionDto(Guid Id, Guid ServiceTypeId, List<WorkflowStepDto> Steps);
 
-public record WorkflowStepDto(Guid Id, int StepOrder, string RoleRequired, string StepName, string? StepDescription);
+public record WorkflowStepDto(
+    Guid Id,
+    int StepOrder,
+    string RoleRequired,
+    string StepName,
+    string? StepDescription,
+    int? ExpectedCompletionMinutes);

@@ -15,7 +15,12 @@ public class CreateWorkflowCommandHandler
     {
         var definition = WorkflowDefinition.Create(
             command.ServiceTypeId,
-            command.Steps.Select(s => (s.StepOrder, s.RoleRequired, s.StepName, s.StepDescription)));
+            command.Steps.Select(s => (
+                s.StepOrder,
+                s.RoleRequired,
+                s.StepName,
+                s.StepDescription,
+                s.ExpectedCompletionMinutes)));
 
         await _repo.AddAsync(definition, ct);
 

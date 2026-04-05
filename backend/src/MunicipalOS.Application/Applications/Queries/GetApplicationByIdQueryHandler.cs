@@ -19,6 +19,7 @@ public class GetApplicationByIdQueryHandler
 
         var dto = new ApplicationDetailDto(
             app.Id,
+            app.FriendlyApplicationId,
             app.CitizenId,
             app.Citizen.FullName,
             app.ServiceTypeId,
@@ -26,6 +27,7 @@ public class GetApplicationByIdQueryHandler
             app.Status.ToString(),
             app.CurrentStep,
             app.SubmittedAt,
+            app.DueAt,
             app.Documents
                 .Select(d => new ApplicationDocumentDto(d.Id, d.DocumentName, d.FilePath, d.UploadedAt))
                 .ToList(),
@@ -41,6 +43,8 @@ public class GetApplicationByIdQueryHandler
                     s.WorkflowStep.StepDescription,
                     s.WorkflowStep.RoleRequired,
                     s.Status.ToString(),
+                    s.ExpectedCompletionMinutes,
+                    s.DueAt,
                     s.AssignedToUserId,
                     s.AssignedToUser?.FullName,
                     s.AssignedOn,

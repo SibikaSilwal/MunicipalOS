@@ -8,6 +8,7 @@ export interface AuthUser {
   fullName: string
   role: RoleName
   municipalityId: string
+  municipalityShortName?: string | null
 }
 
 interface AuthState {
