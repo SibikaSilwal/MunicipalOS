@@ -4,6 +4,7 @@ import {
   myAssignedApplicationsQueryOptions,
   pendingApplicationsQueryOptions,
 } from '@/hooks/queries/use-applications'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_authenticated/officer/dashboard')({
   loader: ({ context }) =>
@@ -15,10 +16,11 @@ export const Route = createFileRoute('/_authenticated/officer/dashboard')({
 })
 
 function OfficerDashboard() {
+  const { t } = useTranslation()
   return (
     <OfficerPendingApplicationsTabs
       variant="dashboard"
-      title="Pending Queue"
+      title={t('applications.pendingQueueTitle')}
     />
   )
 }

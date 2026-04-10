@@ -5,6 +5,7 @@ import {
   myAssignedApplicationsQueryOptions,
   pendingApplicationsQueryOptions,
 } from '@/hooks/queries/use-applications'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_authenticated/officer/applications')({
   loader: ({ context }) =>
@@ -17,10 +18,11 @@ export const Route = createFileRoute('/_authenticated/officer/applications')({
 })
 
 function AllApplicationsPage() {
+  const { t } = useTranslation()
   return (
     <OfficerPendingApplicationsTabs
       variant="catalog"
-      title="All Applications"
+      title={t('applications.allApplicationsTitle')}
     />
   )
 }

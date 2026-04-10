@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import type { ColDef, ICellRendererParams } from 'ag-grid-community'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +21,17 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { PageHeader } from '@/components/shared/page-header'
-import { DataTable } from '@/components/shared/data-table'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useAuth } from '@/hooks/use-auth'
 import {
   serviceTypesQueryOptions,
@@ -34,8 +43,8 @@ import {
   parseSlaDaysToMinutes,
   SLA_DAY_OPTIONS,
 } from '@/lib/sla'
-import type { ServiceType } from '@/types/api'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Search, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_authenticated/admin/services')({
   component: ServiceTypesPage,
@@ -46,39 +55,73 @@ interface DocRow {
   required: boolean
 }
 
-const columns: ColDef<ServiceType>[] = [
-  { field: 'name', headerName: 'Name' },
-  {
-    field: 'description',
-    headerName: 'Description',
-    cellRenderer: (p: ICellRendererParams<ServiceType>) =>
-      p.data ? (
-        <span className="text-muted-foreground">
-          {p.data.description || '—'}
-        </span>
-      ) : null,
-  },
-  {
-    colId: 'documents',
-    headerName: 'Required Docs',
-    maxWidth: 140,
-    valueGetter: (p) => p.data?.requiredDocuments.length ?? 0,
-  },
-  {
-    colId: 'expectedSla',
-    headerName: 'Expected SLA',
-    valueGetter: (p) =>
-      formatSlaMinutes(p.data?.expectedCompletionMinutes),
-  },
-]
+/** Same visible character budget for every card; overflow moves to tooltip. */
+const DESCRIPTION_PREVIEW_MAX_CHARS = 75
+
+function ServiceTypeDescriptionBlurb({
+  description,
+}: {
+  description: string | null
+}) {
+  const full = description?.trim() ?? ''
+  if (!full) {
+    return (
+      <p className="h-full text-xs leading-relaxed text-muted-foreground">—</p>
+    )
+  }
+
+  const isTruncated = full.length > DESCRIPTION_PREVIEW_MAX_CHARS
+  const previewText = isTruncated
+    ? `${full.slice(0, DESCRIPTION_PREVIEW_MAX_CHARS)}…`
+    : full
+
+  if (!isTruncated) {
+    return (
+      <p className="h-full text-xs leading-relaxed text-muted-foreground">
+        {previewText}
+      </p>
+    )
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        closeOnClick={false}
+        delay={200}
+        render={(props) => (
+          <span
+            {...props}
+            className="block h-full cursor-inherit text-left text-xs leading-relaxed text-muted-foreground"
+          >
+            {previewText}
+          </span>
+        )}
+      />
+      <TooltipContent
+        side="top"
+        className="max-w-md whitespace-pre-wrap break-words"
+      >
+        {full}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
 function ServiceTypesPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { data: serviceTypes = [] } = useQuery(
     serviceTypesQueryOptions(user?.municipalityId),
   )
   const createServiceType = useCreateServiceType()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const filteredServiceTypes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return serviceTypes
+    return serviceTypes.filter((s) => s.name.toLowerCase().includes(q))
+  }, [serviceTypes, searchQuery])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [name, setName] = useState('')
@@ -109,7 +152,7 @@ function ServiceTypesPage() {
 
   async function handleCreate() {
     if (!name.trim()) {
-      toast.error('Name is required')
+      toast.error(t('admin.services.nameRequired'))
       return
     }
 
@@ -127,12 +170,12 @@ function ServiceTypesPage() {
         expectedCompletionMinutes: parsedSla.value,
         requiredDocuments: docs.filter((d) => d.name.trim()),
       })
-      toast.success('Service type created')
+      toast.success(t('admin.services.createdToast'))
       setDialogOpen(false)
       resetForm()
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : 'Failed to create service type',
+        err instanceof Error ? err.message : t('admin.services.createFailed'),
       )
     }
   }
@@ -140,59 +183,124 @@ function ServiceTypesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Service Types"
-        description="Manage the services offered by your municipality"
+        title={t('admin.services.title')}
+        description={t('admin.services.description')}
       >
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Service Type
+          {t('admin.services.createServiceType')}
         </Button>
       </PageHeader>
 
-      <DataTable
-        columnDefs={columns}
-        rowData={serviceTypes}
-        searchColumn="name"
-        searchPlaceholder="Search service types..."
-        onRowClick={(row) =>
-          navigate({
-            to: '/admin/workflows',
-            search: { serviceTypeId: row.id },
-          })
-        }
-      />
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('admin.services.searchPlaceholder')}
+          className="pl-9"
+          aria-label={t('admin.services.searchAriaLabel')}
+        />
+      </div>
+
+      {filteredServiceTypes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {serviceTypes.length === 0
+            ? t('admin.services.emptyNoServiceTypes')
+            : t('admin.services.emptyNoMatches')}
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-4">
+          {filteredServiceTypes.map((st) => (
+            <Card
+              key={st.id}
+              role="button"
+              tabIndex={0}
+              className="w-[320px] max-w-full shrink-0 cursor-pointer gap-2 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() =>
+                navigate({
+                  to: '/admin/workflows',
+                  search: { serviceTypeId: st.id },
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigate({
+                    to: '/admin/workflows',
+                    search: { serviceTypeId: st.id },
+                  })
+                }
+              }}
+            >
+              <CardHeader className="flex h-[3.5rem] shrink-0 items-start pb-0 pt-0">
+                <CardTitle className="line-clamp-2 break-words text-base font-medium leading-snug">
+                  {st.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2 space-y-0 pt-0">
+                <div className="h-[3.25rem] shrink-0 overflow-hidden">
+                  <ServiceTypeDescriptionBlurb description={st.description} />
+                </div>
+                <div className="h-[4.5rem] shrink-0 overflow-hidden">
+                  <p className="line-clamp-4 text-xs leading-relaxed">
+                    <span className="font-medium text-foreground">
+                      {t('admin.services.requiredDocumentsCount', {
+                        count: st.requiredDocuments.length,
+                      })}
+                    </span>{' '}
+                    <span className="text-[11px] text-muted-foreground">
+                      {st.requiredDocuments.length === 0
+                        ? '—'
+                        : st.requiredDocuments.map((d) => d.name).join(', ')}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex h-[2.75rem] shrink-0 flex-col justify-start overflow-hidden">
+                  <h3 className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('admin.services.expectedSla')}
+                  </h3>
+                  <p className="truncate text-xs leading-relaxed">
+                    {formatSlaMinutes(st.expectedCompletionMinutes)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Create Service Type</DialogTitle>
+            <DialogTitle>{t('admin.services.dialogTitle')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t('admin.services.nameLabel')}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Birth Certificate"
+                placeholder={t('admin.services.namePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{t('admin.services.descriptionLabel')}</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the service..."
+                placeholder={t('admin.services.descriptionPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Expected Completion (days)</Label>
+              <Label>{t('admin.services.expectedCompletionDaysLabel')}</Label>
               <Select
                 value={expectedCompletionDays}
                 onValueChange={(value) => setExpectedCompletionDays(value ?? '')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select expected completion days" />
+                  <SelectValue placeholder={t('admin.services.expectedCompletionPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {SLA_DAY_OPTIONS.map((days) => {
@@ -207,20 +315,22 @@ function ServiceTypesPage() {
               </Select>
               <p className="text-xs text-muted-foreground">
                 {expectedCompletionDays.trim()
-                  ? `Preview: ${formatSlaDays(Number(expectedCompletionDays))}`
-                  : 'Leave blank if no service-level SLA is configured.'}
+                  ? t('admin.services.slaPreview', {
+                      preview: formatSlaDays(Number(expectedCompletionDays)),
+                    })
+                  : t('admin.services.slaNoConfigHint')}
               </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Required Documents</Label>
+                <Label>{t('applications.requiredDocumentsLabel')}</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={addDocRow}
                 >
-                  <Plus className="mr-1 h-3 w-3" /> Add
+                  <Plus className="mr-1 h-3 w-3" /> {t('admin.services.add')}
                 </Button>
               </div>
               {docs.map((doc, i) => (
@@ -228,7 +338,7 @@ function ServiceTypesPage() {
                   <Input
                     value={doc.name}
                     onChange={(e) => updateDoc(i, 'name', e.target.value)}
-                    placeholder="Document name"
+                    placeholder={t('admin.services.docNamePlaceholder')}
                     className="flex-1"
                   />
                   <label className="flex items-center gap-1 text-sm whitespace-nowrap">
@@ -240,7 +350,7 @@ function ServiceTypesPage() {
                       }
                       className="rounded border-input"
                     />
-                    Required
+                    {t('admin.services.required')}
                   </label>
                   <Button
                     type="button"
@@ -258,13 +368,13 @@ function ServiceTypesPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleCreate}
               disabled={createServiceType.isPending}
             >
-              {createServiceType.isPending ? 'Creating...' : 'Create'}
+              {createServiceType.isPending ? t('common.creating') : t('common.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

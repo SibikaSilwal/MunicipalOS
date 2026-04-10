@@ -14,6 +14,13 @@ import { cn } from '@/lib/utils'
 
 const gridTheme = themeQuartz.withParams({
   fontFamily: ['inherit'],
+  accentColor: '#003893',
+  backgroundColor: '#ffffff',
+  borderColor: '#dfe3e8',
+  chromeBackgroundColor: '#eef0f3',
+  headerBackgroundColor: '#e8eaef',
+  foregroundColor: '#111827',
+  borderRadius: 4,
 })
 
 export interface DataTableProps<TData> {

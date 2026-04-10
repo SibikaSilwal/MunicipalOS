@@ -14,12 +14,14 @@ import {
 } from '@/components/ui/card'
 import appLogo from '@/assets/nagarsanchalanapplogo.svg'
 import { loginUser, getRoleDashboard } from '@/lib/auth'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
 })
 
 function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,10 +35,10 @@ function LoginPage() {
 
     try {
       const { user } = await loginUser({ email, password })
-      toast.success('Welcome back!')
+      toast.success(t('auth.welcomeBackToast'))
       navigate({ to: getRoleDashboard(user.role) })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(err instanceof Error ? err.message : t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -54,10 +56,10 @@ function LoginPage() {
             />
           </div>
           <CardTitle className="text-2xl">
-            Sign in to Nagar Digital Sewa Pranali
+            {t('auth.signInTitle')}
           </CardTitle>
           <CardDescription>
-            Enter your credentials to access your account
+            {t('auth.signInSubtitle')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -68,18 +70,18 @@ function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.passwordLabel')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -92,12 +94,12 @@ function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? t('auth.signingIn') : t('auth.signIn')}
             </Button>
             <p className="text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
+              {t('auth.noAccountPrompt')}{' '}
               <Link to="/register" className="text-primary hover:underline">
-                Register
+                {t('auth.registerLink')}
               </Link>
             </p>
           </CardFooter>

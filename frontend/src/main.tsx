@@ -6,6 +6,7 @@ import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
 import { routeTree } from './routeTree.gen'
 import { useAuthStore } from './stores/auth-store'
 import { TooltipProvider } from './components/ui/tooltip'
+import './i18n'
 import './index.css'
 import appFavicon from './assets/nagarsanchalanapplogo.svg'
 

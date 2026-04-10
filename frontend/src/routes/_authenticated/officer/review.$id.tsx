@@ -46,6 +46,7 @@ import {
   UserPlus,
   ArrowRight,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_authenticated/officer/review/$id')({
   loader: ({ context, params }) =>
@@ -58,6 +59,7 @@ export const Route = createFileRoute('/_authenticated/officer/review/$id')({
 type DialogType = 'complete-step' | 'reject' | 'request-docs' | 'assign' | null
 
 function ReviewPage() {
+  const { t } = useTranslation()
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -126,24 +128,24 @@ function ReviewPage() {
   async function handlePickUp() {
     try {
       await pickUp.mutateAsync({ id })
-      toast.success('Step picked up — you are now assigned')
+      toast.success(t('applications.stepPickedUpToast'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to pick up step')
+      toast.error(err instanceof Error ? err.message : t('applications.pickUpFailed'))
     }
   }
 
   async function handleAssign() {
     if (!selectedOfficerId) {
-      toast.error('Please select an officer')
+      toast.error(t('applications.selectOfficerError'))
       return
     }
     try {
       await assignStep.mutateAsync({ id, officerId: selectedOfficerId })
-      toast.success('Step assigned successfully')
+      toast.success(t('applications.stepAssignedToast'))
       setDialog(null)
       setSelectedOfficerId('')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to assign step')
+      toast.error(err instanceof Error ? err.message : t('applications.assignFailed'))
     }
   }
 
@@ -152,31 +154,31 @@ function ReviewPage() {
       if (dialog === 'complete-step') {
         if (isLastStep) {
           await approve.mutateAsync({ id, comment: comment || undefined })
-          toast.success('Application approved')
+          toast.success(t('applications.approvedToast'))
         } else {
           await completeStep.mutateAsync({ id, comment: comment || undefined })
-          toast.success('Step completed — advanced to next step')
+          toast.success(t('applications.stepCompletedToast'))
         }
       } else if (dialog === 'reject') {
         if (!comment.trim()) {
-          toast.error('Comment is required when rejecting')
+          toast.error(t('applications.rejectCommentRequired'))
           return
         }
         await reject.mutateAsync({ id, comment })
-        toast.success('Application rejected')
+        toast.success(t('applications.rejectedToast'))
       } else if (dialog === 'request-docs') {
         if (!comment.trim()) {
-          toast.error('Please specify which documents are needed')
+          toast.error(t('applications.requestDocsDetailsRequired'))
           return
         }
         await requestDocs.mutateAsync({ id, comment })
-        toast.success('Documents requested')
+        toast.success(t('applications.documentsRequestedToast'))
       }
       setDialog(null)
       setComment('')
       navigate({ to: '/officer/dashboard' })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Action failed')
+      toast.error(err instanceof Error ? err.message : t('common.actionFailed'))
     }
   }
 
@@ -191,7 +193,7 @@ function ReviewPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Review Application"
+        title={t('applications.reviewTitle')}
         description={application.friendlyApplicationId}
       >
         <StatusBadge status={application.status} />
@@ -202,33 +204,46 @@ function ReviewPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Application Info</CardTitle>
+              <CardTitle>{t('applications.applicationInfoTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-muted-foreground">Application</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.applicationLabel')}
+                </p>
                 <p className="font-medium font-mono text-sm">
                   {application.friendlyApplicationId}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Citizen</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.citizenLabel')}
+                </p>
                 <p className="font-medium">{application.citizenName}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Service Type</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.serviceTypeLabel')}
+                </p>
                 <p className="font-medium">{application.serviceTypeName}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Submitted</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.submittedLabel')}
+                </p>
                 <p className="font-medium">
                   {formatDate(application.submittedAt)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Current Step</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.currentStepLabel')}
+                </p>
                 <p className="font-medium">
-                  {application.currentStep} / {totalSteps}
+                  {t('applications.stepOfTotal', {
+                    n: application.currentStep,
+                    m: totalSteps,
+                  })}
                   {currentWfStep &&
                     ` — ${currentWfStep.stepName || currentWfStep.roleRequired}`}
                 </p>
@@ -239,7 +254,7 @@ function ReviewPage() {
           {application.workflowSteps.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Workflow Progress</CardTitle>
+                <CardTitle>{t('applications.workflowProgressTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <WorkflowProgress steps={application.workflowSteps} />
@@ -249,7 +264,7 @@ function ReviewPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Status History</CardTitle>
+              <CardTitle>{t('applications.statusHistoryTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               <StatusTimeline entries={application.statusHistory} />
@@ -261,12 +276,12 @@ function ReviewPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Uploaded Documents</CardTitle>
+              <CardTitle>{t('applications.uploadedDocumentsTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               {application.documents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No documents uploaded.
+                  {t('applications.noDocumentsUploadedWithPeriod')}
                 </p>
               ) : (
                 <ul className="space-y-2">
@@ -306,7 +321,7 @@ function ReviewPage() {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  Step Actions
+                  {t('applications.stepActionsTitle')}
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
                     ({currentWfStep.stepName || `Step ${currentWfStep.stepOrder}`})
                   </span>
@@ -327,7 +342,9 @@ function ReviewPage() {
                         disabled={isProcessing || !roleMatchesStep}
                       >
                         <Hand className="mr-2 h-4 w-4" />
-                        {pickUp.isPending ? 'Picking up...' : 'Pick Up This Step'}
+                        {pickUp.isPending
+                          ? t('applications.pickingUp')
+                          : t('applications.pickUpStep')}
                       </Button>
                     </TooltipForDisabledControl>
                     {isAdmin && (
@@ -338,7 +355,7 @@ function ReviewPage() {
                         disabled={isProcessing}
                       >
                         <UserPlus className="mr-2 h-4 w-4" />
-                        Assign to Officer
+                        {t('applications.assignToOfficer')}
                       </Button>
                     )}
                   </>
@@ -355,7 +372,7 @@ function ReviewPage() {
                       disabled={isProcessing}
                     >
                       <UserPlus className="mr-2 h-4 w-4" />
-                      Reassign Step
+                      {t('applications.reassignStep')}
                     </Button>
                   )}
 
@@ -375,12 +392,12 @@ function ReviewPage() {
                         {isLastStep ? (
                           <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve Application
+                            {t('applications.approveApplication')}
                           </>
                         ) : (
                           <>
                             <ArrowRight className="mr-2 h-4 w-4" />
-                            Complete Step & Advance
+                            {t('applications.completeStepAndAdvance')}
                           </>
                         )}
                       </Button>
@@ -398,7 +415,7 @@ function ReviewPage() {
                           disabled={isProcessing || actionsBlockedByRole}
                         >
                           <XCircle className="mr-2 h-4 w-4" />
-                          Reject
+                          {t('applications.reject')}
                         </Button>
                       </TooltipForDisabledControl>
                       <TooltipForDisabledControl
@@ -413,7 +430,7 @@ function ReviewPage() {
                           disabled={isProcessing || actionsBlockedByRole}
                         >
                           <FileQuestion className="mr-2 h-4 w-4" />
-                          Request Docs
+                          {t('applications.requestDocs')}
                         </Button>
                       </TooltipForDisabledControl>
                     </div>
@@ -425,7 +442,7 @@ function ReviewPage() {
                         disabled={isProcessing}
                       >
                         <UserPlus className="mr-2 h-4 w-4" />
-                        Reassign Step
+                        {t('applications.reassignStep')}
                       </Button>
                     )}
                   </div>
@@ -436,7 +453,9 @@ function ReviewPage() {
                   currentWfStep.status !== 'InProgress' &&
                   currentWfStep.status !== 'DocumentsRequested' && (
                     <p className="text-sm text-muted-foreground text-center">
-                      This step is assigned to you but is currently in &ldquo;{currentWfStep.status}&rdquo; state.
+                      {t('applications.stepAssignedButInState', {
+                        state: currentWfStep.status,
+                      })}
                     </p>
                   )}
               </CardContent>
@@ -447,9 +466,9 @@ function ReviewPage() {
             <Card>
               <CardContent className="py-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  This application has been{' '}
-                  <span className="font-medium">{application.status.toLowerCase()}</span>.
-                  No further actions available.
+                  {t('applications.noFurtherActions', {
+                    status: application.status.toLowerCase(),
+                  })}
                 </p>
               </CardContent>
             </Card>
@@ -461,22 +480,33 @@ function ReviewPage() {
       <ConfirmDialog
         open={dialog === 'complete-step'}
         onOpenChange={(open) => !open && setDialog(null)}
-        title={isLastStep ? 'Approve Application' : 'Complete Step'}
+        title={
+          isLastStep
+            ? t('applications.approveApplication')
+            : t('applications.completeStepTitle')
+        }
         description={
           isLastStep
-            ? 'This is the final step. Completing it will approve the entire application.'
-            : `Complete "${currentWfStep?.stepName || `Step ${currentWfStep?.stepOrder}`}" and advance to the next step.`
+            ? t('applications.finalStepApproveHelp')
+            : t('applications.completeAndAdvanceHelp', {
+                step:
+                  currentWfStep?.stepName || `Step ${currentWfStep?.stepOrder}`,
+              })
         }
-        confirmLabel={isLastStep ? 'Approve' : 'Complete Step'}
+        confirmLabel={
+          isLastStep
+            ? t('applications.approve')
+            : t('applications.completeStepConfirm')
+        }
         onConfirm={handleAction}
         loading={approve.isPending || completeStep.isPending}
       >
         <div className="space-y-2 py-2">
-          <Label>Comment (optional)</Label>
+          <Label>{t('applications.commentOptionalLabel')}</Label>
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Add a comment..."
+            placeholder={t('applications.addCommentPlaceholder')}
           />
         </div>
       </ConfirmDialog>
@@ -485,21 +515,22 @@ function ReviewPage() {
       <ConfirmDialog
         open={dialog === 'reject'}
         onOpenChange={(open) => !open && setDialog(null)}
-        title="Reject Application"
-        description="This will reject the current step and the entire application."
-        confirmLabel="Reject"
+        title={t('applications.rejectDialogTitle')}
+        description={t('applications.rejectDialogDescription')}
+        confirmLabel={t('applications.reject')}
         variant="destructive"
         onConfirm={handleAction}
         loading={reject.isPending}
       >
         <div className="space-y-2 py-2">
           <Label>
-            Reason <span className="text-destructive">*</span>
+            {t('applications.rejectReasonLabel')}{' '}
+            <span className="text-destructive">*</span>
           </Label>
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Reason for rejection..."
+            placeholder={t('applications.rejectReasonPlaceholder')}
             required
           />
         </div>
@@ -509,20 +540,21 @@ function ReviewPage() {
       <ConfirmDialog
         open={dialog === 'request-docs'}
         onOpenChange={(open) => !open && setDialog(null)}
-        title="Request Documents"
-        description="Specify what documents are needed from the citizen."
-        confirmLabel="Send Request"
+        title={t('applications.requestDocumentsDialogTitle')}
+        description={t('applications.requestDocumentsDialogDescription')}
+        confirmLabel={t('applications.sendRequest')}
         onConfirm={handleAction}
         loading={requestDocs.isPending}
       >
         <div className="space-y-2 py-2">
           <Label>
-            Details <span className="text-destructive">*</span>
+            {t('applications.requestDocumentsDetailsLabel')}{' '}
+            <span className="text-destructive">*</span>
           </Label>
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Describe which documents are needed..."
+            placeholder={t('applications.requestDocumentsDetailsPlaceholder')}
             required
           />
         </div>
@@ -537,22 +569,24 @@ function ReviewPage() {
             setSelectedOfficerId('')
           }
         }}
-        title="Assign Step to Officer"
-        description={`Assign "${currentWfStep?.stepName || `Step ${currentWfStep?.stepOrder}`}" to an officer.`}
-        confirmLabel="Assign"
+        title={t('applications.assignStepDialogTitle')}
+        description={t('applications.assignStepDialogDescription', {
+          step: currentWfStep?.stepName || `Step ${currentWfStep?.stepOrder}`,
+        })}
+        confirmLabel={t('applications.assign')}
         onConfirm={handleAssign}
         loading={assignStep.isPending}
       >
         <div className="space-y-2 py-2">
-          <Label>Select Officer</Label>
+          <Label>{t('applications.selectOfficerLabel')}</Label>
           {!municipalityId && (
             <p className="text-sm text-destructive">
-              Your session is missing a municipality. Sign out and sign in again.
+              {t('applications.missingMunicipalitySession')}
             </p>
           )}
           {municipalityId && officers.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No officers found for this municipality.
+              {t('applications.noOfficersFound')}
             </p>
           )}
           {municipalityId &&
@@ -560,8 +594,9 @@ function ReviewPage() {
             eligibleOfficers.length === 0 &&
             currentWfStep && (
               <p className="text-sm text-muted-foreground">
-                No officers with the required role (
-                {currentWfStep.roleRequired}) for this step.
+                {t('applications.noEligibleOfficersForRole', {
+                  role: currentWfStep.roleRequired,
+                })}
               </p>
             )}
           <Select
@@ -570,7 +605,7 @@ function ReviewPage() {
             disabled={!municipalityId || eligibleOfficers.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Choose an officer..." />
+              <SelectValue placeholder={t('applications.chooseOfficerPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {eligibleOfficers.map((o) => (

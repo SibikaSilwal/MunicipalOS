@@ -1,50 +1,48 @@
 @import "tailwindcss";
 
-/* Nepal flag–inspired palette: crimson, deep blue border tone, white */
+/* Nepal institutional palette: flag red, Nepal blue, neutral surfaces */
 @theme inline {
-  --color-background: oklch(0.995 0.004 264);
-  --color-foreground: oklch(0.22 0.045 264);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.22 0.045 264);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.22 0.045 264);
-  /* Crimson red (flag field) */
-  --color-primary: oklch(0.52 0.2 27);
-  --color-primary-foreground: oklch(0.99 0.002 264);
-  /* Cool blue-gray surfaces */
-  --color-secondary: oklch(0.94 0.025 264);
-  --color-secondary-foreground: oklch(0.32 0.09 264);
-  --color-muted: oklch(0.955 0.018 264);
-  --color-muted-foreground: oklch(0.48 0.05 264);
-  --color-accent: oklch(0.92 0.04 264);
-  --color-accent-foreground: oklch(0.3 0.1 264);
-  /* Darker crimson for errors (distinct from primary CTAs) */
-  --color-destructive: oklch(0.45 0.19 27);
-  --color-destructive-foreground: oklch(0.99 0.002 264);
-  --color-border: oklch(0.9 0.03 264);
-  --color-input: oklch(0.9 0.03 264);
-  --color-ring: oklch(0.42 0.12 264);
-  --color-chart-1: oklch(0.52 0.2 27);
-  --color-chart-2: oklch(0.42 0.12 264);
-  --color-chart-3: oklch(0.65 0.12 264);
-  --color-chart-4: oklch(0.72 0.14 27);
-  --color-chart-5: oklch(0.55 0.08 264);
-  /* Deep blue sidebar (flag border) with light type */
-  --color-sidebar: oklch(0.3 0.095 264);
-  --color-sidebar-foreground: oklch(0.97 0.015 264);
-  --color-sidebar-primary: oklch(0.52 0.2 27);
-  --color-sidebar-primary-foreground: oklch(0.99 0.002 264);
-  --color-sidebar-accent: oklch(0.36 0.09 264);
-  --color-sidebar-accent-foreground: oklch(0.99 0.002 264);
-  --color-sidebar-border: oklch(0.38 0.08 264);
-  --color-sidebar-ring: oklch(0.55 0.14 264);
-  --color-warning: oklch(0.75 0.14 55);
-  --color-warning-foreground: oklch(0.32 0.08 55);
-  --color-success: oklch(0.55 0.12 195);
-  --color-success-foreground: oklch(0.99 0.002 264);
+  --color-background: #f5f6f8;
+  --color-foreground: #111827;
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #111827;
+  --color-primary: #dc143c;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #003893;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #eef0f3;
+  --color-muted-foreground: #64748b;
+  --color-accent: #e8eaef;
+  --color-accent-foreground: #1e293b;
+  --color-destructive: #d32f2f;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #dfe3e8;
+  --color-input: #dfe3e8;
+  --color-ring: #003893;
+  --color-chart-1: #dc143c;
+  --color-chart-2: #003893;
+  --color-chart-3: #2e7d32;
+  --color-chart-4: #ed6c02;
+  --color-chart-5: #64748b;
+  /* Sidebar: same blue family as secondary, darker base */
+  --color-sidebar: #002752;
+  --color-sidebar-foreground: #f1f5f9;
+  --color-sidebar-primary: #dc143c;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #1a4a8c;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #143d6e;
+  --color-sidebar-ring: #3b6cb5;
+  --color-warning: #ed6c02;
+  --color-warning-foreground: #1a1a1a;
+  --color-success: #2e7d32;
+  --color-success-foreground: #ffffff;
 
-  --radius: 0.625rem;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.5rem;
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", ui-sans-serif, system-ui,
+    sans-serif;
 }
 
 @layer base {
@@ -66,5 +64,22 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .toaster,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }

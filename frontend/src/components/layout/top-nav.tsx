@@ -12,12 +12,17 @@ import { useAuth } from '@/hooks/use-auth'
 import { useQuery } from '@tanstack/react-query'
 import { notificationsQueryOptions } from '@/hooks/queries/use-notifications'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
 
 interface TopNavProps {
   onMenuClick?: () => void
+  className?: string
 }
 
-export function TopNav({ onMenuClick }: TopNavProps) {
+export function TopNav({ onMenuClick, className }: TopNavProps) {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const { data: notifications } = useQuery(notificationsQueryOptions())
   const unreadCount =
@@ -31,7 +36,12 @@ export function TopNav({ onMenuClick }: TopNavProps) {
     .slice(0, 2)
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
+    <header
+      className={cn(
+        'flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6',
+        className,
+      )}
+    >
       <Button
         variant="ghost"
         size="icon"
@@ -42,6 +52,25 @@ export function TopNav({ onMenuClick }: TopNavProps) {
       </Button>
 
       <div className="flex-1" />
+
+      <div className="flex items-center gap-1 rounded-md border bg-background p-1">
+        <Button
+          variant={i18n.language === 'ne' ? 'ghost' : 'secondary'}
+          size="sm"
+          className="h-8 px-3"
+          onClick={() => i18n.changeLanguage('en')}
+        >
+          {t('language.english')}
+        </Button>
+        <Button
+          variant={i18n.language === 'ne' ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-8 px-3"
+          onClick={() => i18n.changeLanguage('ne')}
+        >
+          {t('language.nepali')}
+        </Button>
+      </div>
 
       <Button variant="ghost" size="icon" className="relative">
         <Bell className="h-5 w-5" />
@@ -66,7 +95,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
             </div>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>{t('nav.signOut')}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

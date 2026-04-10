@@ -11,6 +11,7 @@ import { applicationDetailQueryOptions } from '@/hooks/queries/use-applications'
 import { formatDate } from '@/lib/utils'
 import { Download, FileText } from 'lucide-react'
 import { api } from '@/lib/api'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute(
   '/_authenticated/citizen/applications/$id',
@@ -23,6 +24,7 @@ export const Route = createFileRoute(
 })
 
 function ApplicationDetailPage() {
+  const { t } = useTranslation()
   const { id } = Route.useParams()
   const { data: application, isLoading } = useQuery(
     applicationDetailQueryOptions(id),
@@ -71,33 +73,46 @@ function ApplicationDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Application Details</CardTitle>
+              <CardTitle>{t('applications.detailsTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-muted-foreground">Reference</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.referenceLabel')}
+                </p>
                 <p className="font-medium font-mono text-sm">
                   {application.friendlyApplicationId}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Service Type</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.serviceTypeLabel')}
+                </p>
                 <p className="font-medium">{application.serviceTypeName}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Submitted</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.submittedLabel')}
+                </p>
                 <p className="font-medium">
                   {formatDate(application.submittedAt)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.statusLabel')}
+                </p>
                 <StatusBadge status={application.status} />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Current Step</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('applications.currentStepLabel')}
+                </p>
                 <p className="font-medium">
-                  Step {application.currentStep} of {totalSteps}
+                  {t('applications.stepOfTotal', {
+                    n: application.currentStep,
+                    m: totalSteps,
+                  })}
                   {currentWfStep &&
                     ` — ${currentWfStep.stepName || currentWfStep.roleRequired}`}
                 </p>
@@ -108,7 +123,7 @@ function ApplicationDetailPage() {
           {application.workflowSteps.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Workflow Progress</CardTitle>
+                <CardTitle>{t('applications.workflowProgressTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <WorkflowProgress steps={application.workflowSteps} />
@@ -118,12 +133,12 @@ function ApplicationDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Documents</CardTitle>
+              <CardTitle>{t('applications.documentsTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               {application.documents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No documents uploaded.
+                  {t('applications.noDocumentsUploadedWithPeriod')}
                 </p>
               ) : (
                 <ul className="space-y-2">
@@ -153,7 +168,7 @@ function ApplicationDetailPage() {
               onClick={handleDownloadCertificate}
             >
               <Download className="mr-2 h-4 w-4" />
-              Download Certificate
+              {t('applications.downloadCertificate')}
             </Button>
           )}
         </div>
@@ -161,7 +176,7 @@ function ApplicationDetailPage() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Status History</CardTitle>
+              <CardTitle>{t('applications.statusHistoryTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               <StatusTimeline entries={application.statusHistory} />

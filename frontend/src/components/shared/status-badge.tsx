@@ -1,29 +1,30 @@
 import { Badge } from '@/components/ui/badge'
 import type { ApplicationStatus } from '@/types/api'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 const statusConfig: Record<
   ApplicationStatus,
   { label: string; className: string }
 > = {
   Submitted: {
-    label: 'Submitted',
-    className: 'bg-secondary text-secondary-foreground',
+    label: 'applications.status.submitted',
+    className: 'border border-border bg-muted text-muted-foreground',
   },
   UnderReview: {
-    label: 'Under Review',
+    label: 'applications.status.underReview',
     className: 'bg-warning text-warning-foreground',
   },
   Approved: {
-    label: 'Approved',
+    label: 'applications.status.approved',
     className: 'bg-success text-success-foreground',
   },
   Rejected: {
-    label: 'Rejected',
+    label: 'applications.status.rejected',
     className: 'bg-destructive text-destructive-foreground',
   },
   DocumentsRequested: {
-    label: 'Docs Requested',
+    label: 'applications.status.docsRequested',
     className: 'border-primary text-primary bg-transparent',
   },
 }
@@ -34,10 +35,11 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
+  const { t } = useTranslation()
   const config = statusConfig[status]
   return (
     <Badge className={cn(config.className, className)}>
-      {config.label}
+      {t(config.label)}
     </Badge>
   )
 }

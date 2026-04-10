@@ -10,6 +10,7 @@ import { myApplicationsQueryOptions } from '@/hooks/queries/use-applications'
 import type { ApplicationSummary } from '@/types/api'
 import { formatDate } from '@/lib/utils'
 import { FilePlus, FileCheck, Clock, XCircle, Files } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_authenticated/citizen/dashboard')({
   loader: ({ context }) =>
@@ -18,13 +19,14 @@ export const Route = createFileRoute('/_authenticated/citizen/dashboard')({
 })
 
 function CitizenDashboard() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications = [] } = useQuery(myApplicationsQueryOptions())
 
   const columns: ColDef<ApplicationSummary>[] = [
     {
       field: 'friendlyApplicationId',
-      headerName: 'Application',
+      headerName: t('applications.applicationLabel'),
       flex: 0,
       minWidth: 140,
       maxWidth: 200,
@@ -32,18 +34,18 @@ function CitizenDashboard() {
     },
     {
       field: 'serviceTypeName',
-      headerName: 'Service Type',
+      headerName: t('applications.serviceTypeLabel'),
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('applications.statusLabel'),
       cellRenderer: (p: ICellRendererParams<ApplicationSummary>) =>
         p.data ? <StatusBadge status={p.data.status} /> : null,
     },
     {
       colId: 'submittedAt',
       field: 'submittedAt',
-      headerName: 'Submitted',
+      headerName: t('applications.submittedLabel'),
       valueGetter: (p) =>
         p.data ? new Date(p.data.submittedAt).getTime() : 0,
       cellRenderer: (p: ICellRendererParams<ApplicationSummary>) =>
@@ -69,7 +71,7 @@ function CitizenDashboard() {
               })
             }}
           >
-            View
+            {t('common.view')}
           </Button>
         ) : null,
     },
@@ -83,16 +85,26 @@ function CitizenDashboard() {
   const rejected = applications.filter((a) => a.status === 'Rejected').length
 
   const stats = [
-    { label: 'Total', value: total, icon: Files, color: 'text-primary' },
-    { label: 'Pending', value: pending, icon: Clock, color: 'text-warning' },
     {
-      label: 'Approved',
+      label: t('dashboard.stats.total'),
+      value: total,
+      icon: Files,
+      color: 'text-primary',
+    },
+    {
+      label: t('dashboard.stats.pending'),
+      value: pending,
+      icon: Clock,
+      color: 'text-warning',
+    },
+    {
+      label: t('dashboard.stats.approved'),
       value: approved,
       icon: FileCheck,
       color: 'text-success',
     },
     {
-      label: 'Rejected',
+      label: t('dashboard.stats.rejected'),
       value: rejected,
       icon: XCircle,
       color: 'text-destructive',
@@ -102,12 +114,12 @@ function CitizenDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Dashboard"
-        description="View and manage your service applications"
+        title={t('dashboard.myDashboardTitle')}
+        description={t('dashboard.myDashboardSubtitle')}
       >
         <Button onClick={() => navigate({ to: '/citizen/apply' })}>
           <FilePlus className="mr-2 h-4 w-4" />
-          Apply for Service
+          {t('nav.applyForService')}
         </Button>
       </PageHeader>
 
@@ -131,7 +143,7 @@ function CitizenDashboard() {
         columnDefs={columns}
         rowData={applications}
         searchColumn="serviceTypeName"
-        searchPlaceholder="Search by service type..."
+        searchPlaceholder={t('common.searchByServiceTypePlaceholder')}
         onRowClick={(row) =>
           navigate({
             to: '/citizen/applications/$id',

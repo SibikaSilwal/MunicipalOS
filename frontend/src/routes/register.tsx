@@ -23,12 +23,14 @@ import {
 import appLogo from '@/assets/nagarsanchalanapplogo.svg'
 import { registerUser } from '@/lib/auth'
 import { municipalitiesQueryOptions } from '@/hooks/queries/use-municipalities'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
 })
 
 function RegisterPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: municipalities = [] } = useQuery(municipalitiesQueryOptions())
 
@@ -45,15 +47,15 @@ function RegisterPage() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError(t('auth.passwordsDoNotMatch'))
       return
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+      setError(t('auth.passwordMinLength'))
       return
     }
     if (!municipalityId) {
-      setError('Please select a municipality')
+      setError(t('auth.selectMunicipalityError'))
       return
     }
 
@@ -66,10 +68,10 @@ function RegisterPage() {
         municipalityId,
         roleId: 'Citizen',
       })
-      toast.success('Account created successfully!')
+      toast.success(t('auth.accountCreatedToast'))
       navigate({ to: '/citizen/dashboard' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed')
+      setError(err instanceof Error ? err.message : t('auth.registrationFailed'))
     } finally {
       setLoading(false)
     }
@@ -86,9 +88,9 @@ function RegisterPage() {
               className="h-16 w-auto max-w-full object-contain"
             />
           </div>
-          <CardTitle className="text-2xl">Create an account</CardTitle>
+          <CardTitle className="text-2xl">{t('auth.createAccountTitle')}</CardTitle>
           <CardDescription>
-            Register as a citizen to apply for municipal services
+            {t('auth.registerSubtitle')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -99,50 +101,50 @@ function RegisterPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">{t('auth.fullNameLabel')}</Label>
               <Input
                 id="fullName"
-                placeholder="John Doe"
+                placeholder={t('auth.fullNamePlaceholder')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.passwordLabel')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="At least 8 characters"
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t('auth.confirmPasswordLabel')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Re-enter password"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="municipality">Municipality</Label>
+              <Label htmlFor="municipality">{t('auth.municipalityLabel')}</Label>
               <Select
                 value={municipalityId || undefined}
                 onValueChange={(val) => setMunicipalityId(val ?? '')}
@@ -151,7 +153,7 @@ function RegisterPage() {
                 }
               >
                 <SelectTrigger id="municipality">
-                  <SelectValue placeholder="Select a municipality" />
+                  <SelectValue placeholder={t('auth.municipalityPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {municipalities.map((m) => (
@@ -165,12 +167,12 @@ function RegisterPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
             </Button>
             <p className="text-sm text-muted-foreground">
-              Already have an account?{' '}
+              {t('auth.haveAccountPrompt')}{' '}
               <Link to="/login" className="text-primary hover:underline">
-                Sign in
+                {t('auth.signIn')}
               </Link>
             </p>
           </CardFooter>

@@ -33,6 +33,7 @@ import {
   parseSlaDaysToMinutes,
   SLA_DAY_OPTIONS,
 } from '@/lib/sla'
+import { useTranslation } from 'react-i18next'
 
 export interface WorkflowsSearch {
   serviceTypeId?: string
@@ -61,12 +62,7 @@ interface StepDraft {
   expectedCompletionDays: string
 }
 
-const roleOptions: { value: RoleName; label: string }[] = [
-  { value: 'WardOfficer', label: 'Ward Officer' },
-  { value: 'MunicipalOfficer', label: 'Municipal Officer' },
-]
-
-const serviceTypeSelectPlaceholder = 'Choose a service type...'
+const serviceTypeSelectPlaceholderKey = 'admin.workflows.chooseServiceTypePlaceholder'
 
 function emptyStepDraft(): StepDraft {
   return {
@@ -78,6 +74,7 @@ function emptyStepDraft(): StepDraft {
 }
 
 function WorkflowsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const search = Route.useSearch()
   const selectedServiceTypeId = search.serviceTypeId ?? ''
@@ -144,18 +141,23 @@ function WorkflowsPage() {
 
   async function handleSave() {
     if (!selectedServiceTypeId) {
-      toast.error('Please select a service type')
+      toast.error(t('admin.workflows.pleaseSelectServiceType'))
       return
     }
     if (steps.length === 0) {
-      toast.error('Add at least one step')
+      toast.error(t('admin.workflows.addAtLeastOneStep'))
       return
     }
 
     const parsedStepSla = steps.map((step, index) => {
       const parsed = parseSlaDaysToMinutes(step.expectedCompletionDays)
       if (parsed.error) {
-        toast.error(`Step ${index + 1}: ${parsed.error}`)
+        toast.error(
+          t('admin.workflows.stepSlaErrorPrefix', {
+            n: index + 1,
+            error: parsed.error,
+          }),
+        )
         return null
       }
       return parsed.value
@@ -178,13 +180,13 @@ function WorkflowsPage() {
     try {
       if (existingWorkflow) {
         await updateWorkflow.mutateAsync(payload)
-        toast.success('Workflow updated')
+        toast.success(t('admin.workflows.updatedToast'))
       } else {
         await createWorkflow.mutateAsync(payload)
-        toast.success('Workflow created')
+        toast.success(t('admin.workflows.createdToast'))
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save workflow')
+      toast.error(err instanceof Error ? err.message : t('admin.workflows.saveFailed'))
     }
   }
 
@@ -192,11 +194,11 @@ function WorkflowsPage() {
     if (!selectedServiceTypeId) return
     try {
       await deleteWorkflow.mutateAsync(selectedServiceTypeId)
-      toast.success('Workflow deleted')
+      toast.success(t('admin.workflows.deletedToast'))
       setDeleteDialogOpen(false)
       setSteps([emptyStepDraft()])
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete workflow')
+      toast.error(err instanceof Error ? err.message : t('admin.workflows.deleteFailed'))
     }
   }
 
@@ -207,22 +209,22 @@ function WorkflowsPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete workflow?"
-        description="This removes the workflow for this service type. You can define a new one afterward. Not allowed if applications already exist for this service."
-        confirmLabel="Delete"
+        title={t('admin.workflows.deleteTitle')}
+        description={t('admin.workflows.deleteDescription')}
+        confirmLabel={t('admin.workflows.deleteConfirm')}
         variant="destructive"
         loading={deleteWorkflow.isPending}
         onConfirm={handleConfirmDelete}
       />
 
       <PageHeader
-        title="Workflow Builder"
-        description="Define approval steps for each service type"
+        title={t('admin.workflows.builderTitle')}
+        description={t('admin.workflows.builderDescription')}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Select Service Type</CardTitle>
+          <CardTitle>{t('admin.workflows.selectServiceType')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Select
@@ -238,11 +240,11 @@ function WorkflowsPage() {
             }
           >
             <SelectTrigger className="max-w-md">
-              <SelectValue placeholder={serviceTypeSelectPlaceholder}>
+              <SelectValue placeholder={t(serviceTypeSelectPlaceholderKey)}>
                 {(value) =>
                   value
                     ? (serviceTypes.find((s) => s.id === value)?.name ?? String(value))
-                    : serviceTypeSelectPlaceholder
+                    : t(serviceTypeSelectPlaceholderKey)
                 }
               </SelectValue>
             </SelectTrigger>
@@ -261,7 +263,7 @@ function WorkflowsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center justify-between gap-2">
-              Current Workflow
+              {t('admin.workflows.currentWorkflow')}
               <Button
                 type="button"
                 variant="destructive"
@@ -269,7 +271,7 @@ function WorkflowsPage() {
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={deleteWorkflow.isPending}
               >
-                Delete workflow
+                {t('admin.workflows.deleteWorkflow')}
               </Button>
             </CardTitle>
           </CardHeader>
@@ -289,9 +291,13 @@ function WorkflowsPage() {
                       {step.stepDescription && (
                         <p className="mt-1 ml-8 text-xs text-muted-foreground">{step.stepDescription}</p>
                       )}
-                      <p className="mt-0.5 ml-8 text-xs text-muted-foreground">Role: {step.roleRequired}</p>
                       <p className="mt-0.5 ml-8 text-xs text-muted-foreground">
-                        SLA: {formatSlaMinutes(step.expectedCompletionMinutes)}
+                        {t('admin.workflows.roleLabel', { role: step.roleRequired })}
+                      </p>
+                      <p className="mt-0.5 ml-8 text-xs text-muted-foreground">
+                        {t('admin.workflows.slaLabel', {
+                          sla: formatSlaMinutes(step.expectedCompletionMinutes),
+                        })}
                       </p>
                     </div>
                     {i < existingWorkflow.steps.length - 1 && (
@@ -307,9 +313,11 @@ function WorkflowsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            {existingWorkflow ? 'Replace Workflow' : 'Define Workflow'}
+            {existingWorkflow
+              ? t('admin.workflows.replaceWorkflow')
+              : t('admin.workflows.defineWorkflow')}
             <Button size="sm" onClick={addStep}>
-              <Plus className="mr-1 h-3 w-3" /> Add Step
+              <Plus className="mr-1 h-3 w-3" /> {t('admin.workflows.addStep')}
             </Button>
           </CardTitle>
         </CardHeader>
@@ -323,15 +331,15 @@ function WorkflowsPage() {
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="flex-1 space-y-1">
-                      <Label className="text-xs">Step Name</Label>
+                      <Label className="text-xs">{t('admin.workflows.stepName')}</Label>
                       <Input
                         value={step.stepName}
                         onChange={(e) => updateStepField(i, 'stepName', e.target.value)}
-                        placeholder="e.g., Ward Verification"
+                        placeholder={t('admin.workflows.stepNamePlaceholder')}
                       />
                     </div>
                     <div className="flex-1 space-y-1">
-                      <Label className="text-xs">Role Required</Label>
+                      <Label className="text-xs">{t('admin.workflows.roleRequired')}</Label>
                       <Select
                         value={step.roleRequired}
                         onValueChange={(val) => updateStepRole(i, (val ?? 'WardOfficer') as RoleName)}
@@ -340,11 +348,12 @@ function WorkflowsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {roleOptions.map((r) => (
-                            <SelectItem key={r.value} value={r.value}>
-                              {r.label}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="WardOfficer">
+                            {t('admin.workflows.roles.wardOfficer')}
+                          </SelectItem>
+                          <SelectItem value="MunicipalOfficer">
+                            {t('admin.workflows.roles.municipalOfficer')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -376,16 +385,20 @@ function WorkflowsPage() {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Description (optional)</Label>
+                    <Label className="text-xs">
+                      {t('admin.workflows.stepDescriptionOptional')}
+                    </Label>
                     <Textarea
                       value={step.stepDescription}
                       onChange={(e) => updateStepField(i, 'stepDescription', e.target.value)}
-                      placeholder="Describe what happens in this step..."
+                      placeholder={t('admin.workflows.stepDescriptionPlaceholder')}
                       rows={2}
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Expected Completion (days)</Label>
+                    <Label className="text-xs">
+                      {t('admin.workflows.expectedCompletionDays')}
+                    </Label>
                     <Select
                       value={step.expectedCompletionDays}
                       onValueChange={(value) =>
@@ -393,7 +406,7 @@ function WorkflowsPage() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select days" />
+                        <SelectValue placeholder={t('admin.workflows.selectDays')} />
                       </SelectTrigger>
                       <SelectContent>
                         {SLA_DAY_OPTIONS.map((days) => {
@@ -408,8 +421,10 @@ function WorkflowsPage() {
                     </Select>
                     <p className="text-xs text-muted-foreground">
                       {step.expectedCompletionDays.trim()
-                        ? `Preview: ${formatSlaDays(Number(step.expectedCompletionDays))}`
-                        : 'Optional step-level SLA override.'}
+                        ? t('admin.services.slaPreview', {
+                            preview: formatSlaDays(Number(step.expectedCompletionDays)),
+                          })
+                        : t('admin.workflows.optionalStepSlaOverride')}
                     </p>
                   </div>
                 </div>
@@ -425,10 +440,10 @@ function WorkflowsPage() {
               className="w-full"
             >
               {savePending
-                ? 'Saving...'
+                ? t('admin.workflows.saving')
                 : existingWorkflow
-                  ? 'Update workflow'
-                  : 'Create workflow'}
+                  ? t('admin.workflows.updateWorkflow')
+                  : t('admin.workflows.createWorkflow')}
             </Button>
           </div>
         </CardContent>

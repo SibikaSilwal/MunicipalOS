@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import type { RoleName } from '@/types/api'
+import { useTranslation } from 'react-i18next'
 
 interface NavItem {
   label: string
@@ -25,43 +26,43 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: 'Dashboard',
+    label: 'nav.dashboard',
     to: '/citizen/dashboard',
     icon: LayoutDashboard,
     roles: ['Citizen'],
   },
   {
-    label: 'Apply for Service',
+    label: 'nav.applyForService',
     to: '/citizen/apply',
     icon: FilePlus,
     roles: ['Citizen'],
   },
   {
-    label: 'Pending Queue',
+    label: 'nav.pendingQueue',
     to: '/officer/dashboard',
     icon: ClipboardList,
     roles: ['WardOfficer', 'MunicipalOfficer'],
   },
   {
-    label: 'All Applications',
+    label: 'nav.allApplications',
     to: '/officer/applications',
     icon: FileStack,
     roles: ['WardOfficer', 'MunicipalOfficer', 'Admin'],
   },
   {
-    label: 'Service Types',
+    label: 'nav.serviceTypes',
     to: '/admin/services',
     icon: Settings,
     roles: ['Admin'],
   },
   {
-    label: 'Workflows',
+    label: 'nav.workflows',
     to: '/admin/workflows',
     icon: GitBranch,
     roles: ['Admin'],
   },
   {
-    label: 'Performance',
+    label: 'nav.performance',
     to: '/admin/metrics',
     icon: BarChart3,
     roles: ['Admin'],
@@ -74,11 +75,11 @@ interface AppSidebarProps {
 
 function sidebarBrandTitle(municipalityShortName?: string | null) {
   const short = municipalityShortName?.trim()
-  const suffix = 'Nagar Digital Sewa Pranali'
-  return short ? `${short} ${suffix}` : suffix
+  return short ? `${short} ` : ''
 }
 
 export function AppSidebar({ className }: AppSidebarProps) {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
   const role = user?.role ?? 'Citizen'
@@ -102,6 +103,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
         />
         <span className="text-sm font-bold leading-tight">
           {sidebarBrandTitle(user?.municipalityShortName)}
+          {t('brand.appName')}
         </span>
       </div>
 
@@ -120,7 +122,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.label)}
             </Link>
           )
         })}
@@ -144,7 +146,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
           onClick={logout}
         >
           <LogOut className="h-4 w-4" />
-          Sign out
+          {t('nav.signOut')}
         </Button>
       </div>
     </aside>

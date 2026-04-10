@@ -20,12 +20,14 @@ import { serviceTypesQueryOptions } from '@/hooks/queries/use-service-types'
 import { useSubmitApplication } from '@/hooks/queries/use-applications'
 import { useUploadDocument } from '@/hooks/queries/use-documents'
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_authenticated/citizen/apply')({
   component: ApplyPage,
 })
 
 function ApplyPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { data: serviceTypes = [] } = useQuery(
@@ -70,25 +72,36 @@ function ApplyPage() {
         })
       }
 
-      toast.success(`Application ${result.friendlyApplicationId} submitted`)
+      toast.success(
+        t('applications.submittedToast', {
+          ref: result.friendlyApplicationId,
+        }),
+      )
       navigate({
         to: '/citizen/applications/$id',
         params: { id: result.id },
       })
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : 'Failed to submit application',
+        err instanceof Error ? err.message : t('applications.submitFailed'),
       )
     } finally {
       setSubmitting(false)
     }
   }
 
-  const steps = ['Select Service', 'Upload Documents', 'Review & Submit']
+  const steps = [
+    t('applications.steps.selectService'),
+    t('applications.steps.uploadDocuments'),
+    t('applications.steps.reviewAndSubmit'),
+  ]
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader title="Apply for Service" description="Complete the steps below to submit your application" />
+      <PageHeader
+        title={t('applications.applyTitle')}
+        description={t('applications.applySubtitle')}
+      />
 
       {/* Step indicator */}
       <div className="flex items-center gap-2">
@@ -121,14 +134,14 @@ function ApplyPage() {
       {step === 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Select a Service</CardTitle>
+            <CardTitle>{t('applications.selectServiceTitle')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Service Type</Label>
+              <Label>{t('applications.serviceTypeLabel')}</Label>
               <Select value={serviceTypeId} onValueChange={(val) => setServiceTypeId(val ?? '')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a service..." />
+                  <SelectValue placeholder={t('applications.serviceTypePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {serviceTypes.map((s) => (
@@ -148,7 +161,7 @@ function ApplyPage() {
 
             {requiredDocs.length > 0 && (
               <div className="space-y-2">
-                <Label>Required Documents</Label>
+                <Label>{t('applications.requiredDocumentsLabel')}</Label>
                 <ul className="list-inside list-disc text-sm text-muted-foreground">
                   {requiredDocs.map((d) => (
                     <li key={d.id}>
@@ -167,7 +180,7 @@ function ApplyPage() {
                 onClick={() => setStep(1)}
                 disabled={!serviceTypeId}
               >
-                Next <ArrowRight className="ml-2 h-4 w-4" />
+                {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </CardContent>
@@ -178,7 +191,7 @@ function ApplyPage() {
       {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Upload Documents</CardTitle>
+            <CardTitle>{t('applications.steps.uploadDocuments')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {requiredDocs.map((doc) => (
@@ -190,7 +203,7 @@ function ApplyPage() {
                   )}
                 </Label>
                 <FileUploader
-                  label={`Upload ${doc.name}`}
+                  label={t('applications.uploadDocumentCta', { doc: doc.name })}
                   file={files[doc.name] ?? null}
                   onFileSelect={(file) => handleFileSelect(doc.name, file)}
                 />
@@ -199,19 +212,19 @@ function ApplyPage() {
 
             {requiredDocs.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                No documents required for this service.
+                {t('applications.noDocumentsRequired')}
               </p>
             )}
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(0)}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> {t('common.back')}
               </Button>
               <Button
                 onClick={() => setStep(2)}
                 disabled={!allRequiredUploaded && requiredDocs.some((d) => d.required)}
               >
-                Next <ArrowRight className="ml-2 h-4 w-4" />
+                {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </CardContent>
@@ -222,12 +235,14 @@ function ApplyPage() {
       {step === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Review & Submit</CardTitle>
+            <CardTitle>{t('applications.steps.reviewAndSubmit')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg bg-muted p-4 space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Service</span>
+                <span className="text-sm text-muted-foreground">
+                  {t('applications.summary.service')}
+                </span>
                 <span className="text-sm font-medium">
                   {selectedService?.name}
                 </span>
@@ -235,7 +250,7 @@ function ApplyPage() {
               <Separator />
               <div>
                 <span className="text-sm text-muted-foreground">
-                  Documents
+                  {t('applications.summary.documents')}
                 </span>
                 <ul className="mt-1 space-y-1">
                   {Object.entries(files)
@@ -253,7 +268,7 @@ function ApplyPage() {
                     ))}
                   {Object.values(files).filter(Boolean).length === 0 && (
                     <li className="text-sm text-muted-foreground italic">
-                      No documents uploaded
+                      {t('applications.noDocumentsUploaded')}
                     </li>
                   )}
                 </ul>
@@ -262,10 +277,10 @@ function ApplyPage() {
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> {t('common.back')}
               </Button>
               <Button onClick={handleSubmit} disabled={submitting}>
-                {submitting ? 'Submitting...' : 'Submit Application'}
+                {submitting ? t('applications.submitting') : t('applications.submit')}
               </Button>
             </div>
           </CardContent>

@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 const ON_TIME = '#065f46'
 const PAST_DUE = '#c2410c'
@@ -25,9 +26,10 @@ export function SlaOutcomeBarChart({
   pastDue,
   className,
 }: SlaOutcomeBarChartProps) {
+  const { t } = useTranslation()
   const data: Row[] = [
-    { label: 'On time', count: onTime, key: 'onTime' },
-    { label: 'Past due', count: pastDue, key: 'pastDue' },
+    { label: t('sla.onTime'), count: onTime, key: 'onTime' },
+    { label: t('sla.pastDue'), count: pastDue, key: 'pastDue' },
   ]
 
   const max = Math.max(onTime, pastDue, 1)
@@ -70,7 +72,10 @@ export function SlaOutcomeBarChart({
                 <div className="bg-popover text-popover-foreground rounded-lg border px-3 py-2 text-sm shadow-md">
                   <p className="font-medium">{row.label}</p>
                   <p className="text-muted-foreground tabular-nums">
-                    {row.count} application{row.count === 1 ? '' : 's'}
+                    {t('sla.applicationCount', {
+                      count: row.count,
+                      suffix: row.count === 1 ? '' : 's',
+                    })}
                   </p>
                 </div>
               )

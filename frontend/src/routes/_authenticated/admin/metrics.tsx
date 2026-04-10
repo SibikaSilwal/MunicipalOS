@@ -32,6 +32,7 @@ import { SlaOutcomeBarChart } from '@/components/admin/sla-outcome-bar-chart'
 import { cn, formatDate } from '@/lib/utils'
 import type { SlaApplicationReportRow, SlaServiceBreakdownRow } from '@/types/api'
 import { ExternalLink } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const PAGE_SIZE = 20
 
@@ -145,34 +146,6 @@ const onTimeCellStyle = {
   fontWeight: 600,
 } as const
 
-const serviceCols: ColDef<SlaServiceBreakdownRow>[] = [
-  { field: 'serviceTypeName', headerName: 'Service', minWidth: 160 },
-  { field: 'totalCompleted', headerName: 'Completed', maxWidth: 120 },
-  {
-    field: 'completedWithinSla',
-    headerName: 'On time',
-    maxWidth: 100,
-    cellStyle: onTimeCellStyle,
-  },
-  {
-    field: 'breached',
-    headerName: 'Past due',
-    maxWidth: 100,
-    cellStyle: { color: '#9a3412', fontWeight: 600 },
-  },
-  {
-    field: 'percentCompletedWithinSla',
-    headerName: '% on time',
-    maxWidth: 110,
-    valueFormatter: (p) =>
-      p.value != null ? `${Number(p.value).toFixed(1)}%` : '',
-    cellStyle: (p) =>
-      p.value != null && Number(p.value) >= 80
-        ? onTimeCellStyle
-        : undefined,
-  },
-]
-
 function applicationReferenceLabel(row: SlaApplicationReportRow) {
   const ref = row.friendlyApplicationId?.trim()
   return ref || `${row.applicationId.slice(0, 8)}…`
@@ -181,65 +154,8 @@ function applicationReferenceLabel(row: SlaApplicationReportRow) {
 /** Extra field for DataTable quick filter (reference, service, id, officer). */
 type SlaDetailGridRow = SlaApplicationReportRow & { quickFilterText: string }
 
-const detailCols: ColDef<SlaDetailGridRow>[] = [
-  {
-    colId: 'applicationRef',
-    headerName: 'Reference',
-    minWidth: 200,
-    maxWidth: 300,
-    valueGetter: (p) =>
-      p.data ? applicationReferenceLabel(p.data) : '',
-    cellRenderer: (p: ICellRendererParams<SlaDetailGridRow>) =>
-      p.data ? (
-        <Link
-          to="/officer/review/$id"
-          params={{ id: p.data.applicationId }}
-          className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
-        >
-          {applicationReferenceLabel(p.data)}
-          <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
-        </Link>
-      ) : null,
-  },
-  { field: 'serviceTypeName', headerName: 'Service' },
-  { field: 'status', headerName: 'Status', maxWidth: 110 },
-  {
-    field: 'completedAt',
-    headerName: 'Completed',
-    valueFormatter: (p) => (p.value ? formatDate(String(p.value)) : ''),
-  },
-  {
-    field: 'dueAt',
-    headerName: 'Due',
-    valueFormatter: (p) => (p.value ? formatDate(String(p.value)) : ''),
-  },
-  {
-    colId: 'withinSla',
-    headerName: 'SLA',
-    maxWidth: 120,
-    cellRenderer: (p: ICellRendererParams<SlaDetailGridRow>) => {
-      if (!p.data) return null
-      return p.data.withinSla ? (
-        <span className="inline-flex rounded-md bg-[#065f46] px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
-          On time
-        </span>
-      ) : (
-        <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-xs font-semibold text-white shadow-sm dark:bg-red-700">
-          Past due
-        </span>
-      )
-    },
-  },
-  { field: 'terminalOfficerName', headerName: 'Officer' },
-  {
-    field: 'minutesLate',
-    headerName: 'Min late',
-    maxWidth: 100,
-    valueFormatter: (p) => (p.value == null ? '—' : String(p.value)),
-  },
-]
-
 function SlaMetricsPage() {
+  const { t } = useTranslation()
   const search = Route.useSearch()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -329,16 +245,109 @@ function SlaMetricsPage() {
     [report?.items],
   )
 
+  const serviceCols: ColDef<SlaServiceBreakdownRow>[] = useMemo(
+    () => [
+      { field: 'serviceTypeName', headerName: t('sla.service'), minWidth: 160 },
+      {
+        field: 'totalCompleted',
+        headerName: t('sla.completed'),
+        maxWidth: 120,
+      },
+      {
+        field: 'completedWithinSla',
+        headerName: t('sla.onTime'),
+        maxWidth: 100,
+        cellStyle: onTimeCellStyle,
+      },
+      {
+        field: 'breached',
+        headerName: t('sla.pastDue'),
+        maxWidth: 100,
+        cellStyle: { color: '#9a3412', fontWeight: 600 },
+      },
+      {
+        field: 'percentCompletedWithinSla',
+        headerName: `% ${t('sla.onTime')}`,
+        maxWidth: 110,
+        valueFormatter: (p) =>
+          p.value != null ? `${Number(p.value).toFixed(1)}%` : '',
+        cellStyle: (p) =>
+          p.value != null && Number(p.value) >= 80 ? onTimeCellStyle : undefined,
+      },
+    ],
+    [t],
+  )
+
+  const detailCols: ColDef<SlaDetailGridRow>[] = useMemo(
+    () => [
+      {
+        colId: 'applicationRef',
+        headerName: t('sla.reference'),
+        minWidth: 200,
+        maxWidth: 300,
+        valueGetter: (p) => (p.data ? applicationReferenceLabel(p.data) : ''),
+        cellRenderer: (p: ICellRendererParams<SlaDetailGridRow>) =>
+          p.data ? (
+            <Link
+              to="/officer/review/$id"
+              params={{ id: p.data.applicationId }}
+              className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+            >
+              {applicationReferenceLabel(p.data)}
+              <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+            </Link>
+          ) : null,
+      },
+      { field: 'serviceTypeName', headerName: t('sla.service') },
+      { field: 'status', headerName: t('applications.statusLabel'), maxWidth: 110 },
+      {
+        field: 'completedAt',
+        headerName: t('sla.completed'),
+        valueFormatter: (p) => (p.value ? formatDate(String(p.value)) : ''),
+      },
+      {
+        field: 'dueAt',
+        headerName: t('sla.due'),
+        valueFormatter: (p) => (p.value ? formatDate(String(p.value)) : ''),
+      },
+      {
+        colId: 'withinSla',
+        headerName: 'SLA',
+        maxWidth: 120,
+        cellRenderer: (p: ICellRendererParams<SlaDetailGridRow>) => {
+          if (!p.data) return null
+          return p.data.withinSla ? (
+            <span className="inline-flex rounded-md bg-[#065f46] px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
+              {t('sla.onTime')}
+            </span>
+          ) : (
+            <span className="inline-flex rounded-md bg-red-600 px-2 py-0.5 text-xs font-semibold text-white shadow-sm dark:bg-red-700">
+              {t('sla.pastDue')}
+            </span>
+          )
+        },
+      },
+      { field: 'terminalOfficerName', headerName: t('sla.officer') },
+      {
+        field: 'minutesLate',
+        headerName: 'Min late',
+        maxWidth: 100,
+        valueFormatter: (p) => (p.value == null ? '—' : String(p.value)),
+      },
+    ],
+    [t],
+  )
+
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-6">
-      <PageHeader title="Performance & SLA" />
+      <PageHeader title={t('admin.metrics.title')} />
 
       <Card className="shadow-sm">
         <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-3 sm:gap-y-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
             <div className="flex flex-col gap-1">
               <Label htmlFor="sla-from" className="text-xs">
-                From
+                {t('admin.metrics.from')}
               </Label>
               <Input
                 id="sla-from"
@@ -353,7 +362,7 @@ function SlaMetricsPage() {
             </div>
             <div className="flex flex-col gap-1">
               <Label htmlFor="sla-to" className="text-xs">
-                To
+                {t('admin.metrics.to')}
               </Label>
               <Input
                 id="sla-to"
@@ -367,7 +376,7 @@ function SlaMetricsPage() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <Label className="text-xs">Service</Label>
+              <Label className="text-xs">{t('admin.metrics.service')}</Label>
               <Select
                 value={form.serviceTypeId || '__all__'}
                 onValueChange={(v) =>
@@ -378,15 +387,15 @@ function SlaMetricsPage() {
                 }
                 itemToStringLabel={(v) =>
                   v === '__all__' || v == null
-                    ? 'All'
+                    ? t('admin.metrics.all')
                     : (serviceTypes.find((st) => st.id === v)?.name ?? String(v))
                 }
               >
                 <SelectTrigger className="h-9 w-[min(100vw-2rem,200px)] sm:w-[200px]">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t('admin.metrics.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">All</SelectItem>
+                  <SelectItem value="__all__">{t('admin.metrics.all')}</SelectItem>
                   {serviceTypes.map((st) => (
                     <SelectItem key={st.id} value={st.id}>
                       {st.name}
@@ -396,7 +405,7 @@ function SlaMetricsPage() {
               </Select>
             </div>
             <div className="flex flex-col gap-1">
-              <Label className="text-xs">Officer</Label>
+              <Label className="text-xs">{t('admin.metrics.officer')}</Label>
               <Select
                 value={form.terminalOfficerId || '__all__'}
                 onValueChange={(v) =>
@@ -407,15 +416,15 @@ function SlaMetricsPage() {
                 }
                 itemToStringLabel={(v) =>
                   v === '__all__' || v == null
-                    ? 'All'
+                    ? t('admin.metrics.all')
                     : (officers.find((o) => o.id === v)?.fullName ?? String(v))
                 }
               >
                 <SelectTrigger className="h-9 w-[min(100vw-2rem,200px)] sm:w-[200px]">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t('admin.metrics.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">All</SelectItem>
+                  <SelectItem value="__all__">{t('admin.metrics.all')}</SelectItem>
                   {officers.map((o) => (
                     <SelectItem key={o.id} value={o.id}>
                       {o.fullName}
@@ -437,7 +446,7 @@ function SlaMetricsPage() {
                     }))
                   }
                 />
-                Include rejected
+                {t('admin.metrics.includeRejected')}
               </label>
               <label className="flex cursor-pointer items-center gap-1.5 text-xs">
                 <input
@@ -452,7 +461,7 @@ function SlaMetricsPage() {
                     }))
                   }
                 />
-                On time
+                {t('admin.metrics.onTime')}
               </label>
               <label className="flex cursor-pointer items-center gap-1.5 text-xs">
                 <input
@@ -467,7 +476,7 @@ function SlaMetricsPage() {
                     }))
                   }
                 />
-                Breached
+                {t('admin.metrics.breached')}
               </label>
             </div>
           </div>
@@ -477,7 +486,7 @@ function SlaMetricsPage() {
               size="sm"
               onClick={() => applyFilters(true)}
             >
-              Apply
+              {t('admin.metrics.apply')}
             </Button>
             <Button
               type="button"
@@ -485,7 +494,7 @@ function SlaMetricsPage() {
               variant="outline"
               onClick={resetFilters}
             >
-              Reset
+              {t('admin.metrics.reset')}
             </Button>
           </div>
         </CardContent>
@@ -500,26 +509,26 @@ function SlaMetricsPage() {
       ) : dashboard ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
-            title="Completed"
+            title={t('admin.metrics.kpi.completed')}
             value={dashboard.totalCompleted}
-            subtitle="In selected period"
+            subtitle={t('admin.metrics.kpi.inSelectedPeriod')}
           />
           <KpiCard
             variant="onTime"
-            title="On time"
+            title={t('sla.onTime')}
             value={dashboard.completedWithinSla}
-            subtitle="Met or beat due date"
+            subtitle={t('admin.metrics.kpi.metOrBeatDueDate')}
           />
           <KpiCard
             variant="pastDue"
-            title="Past due"
+            title={t('sla.pastDue')}
             value={dashboard.breached}
-            subtitle="Finished after due date"
+            subtitle={t('admin.metrics.kpi.finishedAfterDueDate')}
           />
           <KpiCard
-            title="On-time rate"
+            title={t('admin.metrics.kpi.onTimeRate')}
             value={`${dashboard.percentCompletedWithinSla.toFixed(1)}%`}
-            subtitle="Share of completed (with SLA)"
+            subtitle={t('admin.metrics.kpi.shareOfCompletedWithSla')}
           />
         </div>
       ) : null}
@@ -527,17 +536,17 @@ function SlaMetricsPage() {
       {dashboard && !dashLoading ? (
         <Card className="overflow-hidden shadow-sm">
           <CardHeader className="border-b bg-muted/20 pb-4">
-            <CardTitle className="text-base">Outcomes at a glance</CardTitle>
+            <CardTitle className="text-base">
+              {t('admin.metrics.outcomesTitle')}
+            </CardTitle>
             <p className="text-muted-foreground text-sm font-normal">
-              Completed applications in scope, split by whether they met the
-              municipal due date.
+              {t('admin.metrics.outcomesDescription')}
             </p>
           </CardHeader>
           <CardContent className="pt-6">
             {dashboard.totalCompleted === 0 ? (
               <p className="text-muted-foreground py-12 text-center text-sm">
-                No completed applications with SLA in this period — adjust
-                filters or date range.
+                {t('admin.metrics.noCompletedInPeriod')}
               </p>
             ) : (
               <SlaOutcomeBarChart
@@ -554,26 +563,29 @@ function SlaMetricsPage() {
 
       <div className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">By service</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('admin.metrics.byServiceTitle')}
+          </h2>
           <p className="text-muted-foreground text-sm">
-            Compare volume and timeliness across service types.
+            {t('admin.metrics.byServiceDescription')}
           </p>
         </div>
         <DataTable
           columnDefs={serviceCols}
           rowData={dashboard?.byService ?? []}
           gridHeight={300}
-          searchPlaceholder="Filter services..."
+          searchPlaceholder={t('admin.metrics.filterServicesPlaceholder')}
           searchColumn="serviceTypeName"
         />
       </div>
 
       <div className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Applications</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t('admin.metrics.applicationsTitle')}
+          </h2>
           <p className="text-muted-foreground text-sm">
-            Open a case for full history. “On time” uses the officer who
-            recorded the final decision.
+            {t('admin.metrics.applicationsDescription')}
           </p>
         </div>
         {reportLoading ? (
@@ -584,13 +596,17 @@ function SlaMetricsPage() {
               columnDefs={detailCols}
               rowData={detailGridRows}
               autoHeight
-              searchPlaceholder="Filter by reference, service, or officer…"
+              searchPlaceholder={t('admin.metrics.filterDetailsPlaceholder')}
               searchColumn="quickFilterText"
             />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-muted-foreground text-sm">
                 {report
-                  ? `${report.totalCount} total — page ${report.page} of ${totalPages}`
+                  ? t('admin.metrics.totalPageLabel', {
+                      total: report.totalCount,
+                      page: report.page,
+                      pages: totalPages,
+                    })
                   : null}
               </p>
               <div className="flex gap-2">
@@ -609,7 +625,7 @@ function SlaMetricsPage() {
                     })
                   }
                 >
-                  Previous
+                  {t('common.previous')}
                 </Button>
                 <Button
                   type="button"
@@ -623,7 +639,7 @@ function SlaMetricsPage() {
                     })
                   }
                 >
-                  Next
+                  {t('common.next')}
                 </Button>
               </div>
             </div>
